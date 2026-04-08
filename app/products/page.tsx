@@ -72,52 +72,54 @@ function ProductsContent() {
 
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px' }}>
         {/* Search + controls */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap', alignItems: 'center' }}>
-          {/* Search */}
-          <div style={{ flex: 1, minWidth: 240, position: 'relative' }}>
-            <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+        <div style={{ display: 'flex', gap: 12, marginBottom: 24, alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Search — takes full width on mobile */}
+          <div style={{ flex: '1 1 100%', position: 'relative' }}>
+            <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
             <input
               className="input-field"
-              style={{ paddingLeft: 38, paddingRight: 12, paddingTop: 10, paddingBottom: 10, fontSize: 14 }}
+              style={{ paddingLeft: 38, paddingRight: 36, paddingTop: 10, paddingBottom: 10, fontSize: 14, width: '100%' }}
               placeholder="Search components, sensors, kits..."
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
             {search && (
-              <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+              <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', padding: 4 }}>
                 <X size={14} />
               </button>
             )}
           </div>
 
-          {/* Sort */}
-          <select className="input-field" style={{ width: 'auto', padding: '10px 14px', fontSize: 13 }} value={sort} onChange={e => setSort(e.target.value)}>
-            <option value="newest">Newest First</option>
-            <option value="price-asc">Price: Low to High</option>
-            <option value="price-desc">Price: High to Low</option>
-            <option value="name">Name A-Z</option>
-          </select>
-
-          {/* Filter toggle (mobile) */}
-          <button className="btn-ghost" style={{ padding: '10px 14px', fontSize: 13 }} onClick={() => setShowFilters(!showFilters)}>
-            <SlidersHorizontal size={14} /> Filters
-          </button>
+          {/* Sort + Filter row */}
+          <div style={{ display: 'flex', gap: 8, flex: '1 1 auto' }}>
+            <select className="input-field" style={{ flex: 1, padding: '10px 12px', fontSize: 13 }} value={sort} onChange={e => setSort(e.target.value)}>
+              <option value="newest">Newest First</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+              <option value="name">Name A-Z</option>
+            </select>
+            <button className="btn-ghost" style={{ padding: '10px 14px', fontSize: 13, whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => setShowFilters(!showFilters)}>
+              <SlidersHorizontal size={14} /> Filters
+            </button>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 24 }}>
-          {/* Sidebar filters */}
-          <aside style={{ width: 220, flexShrink: 0 }}>
-            {/* Category filter */}
+        {/* Sidebar + Grid — stacks on mobile */}
+        <div className="products-layout">
+          {/* Category sidebar */}
+          <aside className="products-sidebar">
             <div className="glass" style={{ borderRadius: 12, padding: 16, border: '1px solid var(--border)', marginBottom: 16 }}>
               <h4 style={{ fontSize: 12, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 12, fontFamily: 'var(--font-mono)' }}>Category</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {/* Mobile: horizontal scroll row */}
+              <div className="category-list">
                 {CATEGORIES.map(cat => (
-                  <button key={cat} onClick={() => setCategory(cat)} style={{
+                  <button key={cat} onClick={() => setCategory(cat)} className="category-btn" style={{
                     textAlign: 'left', padding: '7px 10px', borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 13,
                     background: category === cat ? 'rgba(0, 212, 255, 0.1)' : 'transparent',
                     color: category === cat ? 'var(--accent-cyan)' : 'var(--text-secondary)',
                     fontWeight: category === cat ? 600 : 400,
                     transition: 'all 0.15s ease',
+                    whiteSpace: 'nowrap',
                   }}>
                     {cat}
                   </button>
@@ -125,8 +127,7 @@ function ProductsContent() {
               </div>
             </div>
 
-            {/* Price filter */}
-            <div className="glass" style={{ borderRadius: 12, padding: 16, border: '1px solid var(--border)' }}>
+            <div className="glass price-filter-box" style={{ borderRadius: 12, padding: 16, border: '1px solid var(--border)' }}>
               <h4 style={{ fontSize: 12, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 12, fontFamily: 'var(--font-mono)' }}>Max Price</h4>
               <div style={{ color: 'var(--accent-cyan)', fontSize: 18, fontWeight: 700, marginBottom: 10 }}>₹{maxPrice.toLocaleString()}</div>
               <input type="range" min={50} max={10000} step={50} value={maxPrice} onChange={e => setMaxPrice(Number(e.target.value))}
@@ -139,7 +140,7 @@ function ProductsContent() {
           </aside>
 
           {/* Product grid */}
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             {filtered.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '80px 24px' }}>
                 <Package size={48} color="var(--text-muted)" style={{ marginBottom: 16 }} />
@@ -150,12 +151,61 @@ function ProductsContent() {
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 20 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
                 {filtered.map(p => <ProductCard key={p.id} product={p} />)}
               </div>
             )}
           </div>
         </div>
+
+        <style jsx global>{`
+          /* Products layout: sidebar + grid side by side on desktop */
+          .products-layout {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+          }
+          .products-sidebar {
+            width: 220px;
+            flex-shrink: 0;
+          }
+          .category-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+          }
+          .price-filter-box {
+            display: block;
+          }
+          /* Mobile: stack sidebar ABOVE products */
+          @media (max-width: 640px) {
+            .products-layout {
+              flex-direction: column;
+            }
+            .products-sidebar {
+              width: 100%;
+            }
+            /* Horizontal scrolling category pills on mobile */
+            .category-list {
+              flex-direction: row;
+              overflow-x: auto;
+              gap: 6px;
+              padding-bottom: 4px;
+              -webkit-overflow-scrolling: touch;
+              scrollbar-width: none;
+            }
+            .category-list::-webkit-scrollbar { display: none; }
+            .category-btn {
+              flex-shrink: 0;
+              border-radius: 20px !important;
+              padding: 6px 14px !important;
+              border: 1px solid var(--border) !important;
+            }
+            .price-filter-box {
+              display: none; /* hide price slider on mobile to save space */
+            }
+          }
+        `}</style>
       </div>
 
       <Footer />

@@ -18,8 +18,9 @@ export const metadata: Metadata = {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 5,        // allow zoom for accessibility, but cap it
-  themeColor: "#050508",  // Android browser tab color = brand dark
+  maximumScale: 1,        // prevents iOS auto-zoom on input focus (cursor jump fix)
+  userScalable: false,    // belt-and-suspenders for older iOS
+  themeColor: "#050508",
 };
 
 export default function RootLayout({
