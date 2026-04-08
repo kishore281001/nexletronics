@@ -47,6 +47,51 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-cyan); }
 
+/* ══════════════════════════════════════════════════
+   MOBILE TYPING FIX — prevents iOS Safari viewport
+   zoom when tapping an input (the "cursor jumps out"
+   bug). iOS zooms when font-size < 16px.
+   Using high-specificity selector to beat inline styles.
+══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* High specificity chain beats inline style on mobile */
+  html body input,
+  html body textarea,
+  html body select {
+    font-size: 16px !important;
+    /* Prevent double-tap zoom on inputs */
+    touch-action: manipulation;
+  }
+}
+
+/* touch-action everywhere for better responsiveness */
+button, a, [role="button"] {
+  touch-action: manipulation;
+}
+
+/* Admin panel mobile layout fix */
+@media (max-width: 768px) {
+  /* Make each admin page wrapper column on mobile */
+  .admin-page-wrap {
+    flex-direction: column !important;
+  }
+  /* Admin main content takes full width */
+  .admin-page-wrap > main {
+    padding: 16px !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow-x: hidden;
+  }
+  /* Grids in admin collapse to 1 column */
+  .admin-2col-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .admin-3col-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
 /* Glass card */
 .glass {
   background: rgba(13, 13, 26, 0.7);

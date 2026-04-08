@@ -84,7 +84,7 @@ export default function NewProductPage() {
   );
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
+    <div className="admin-page-wrap" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
       <AdminSidebar />
       <main style={{ flex: 1, padding: 32, overflowY: 'auto', maxWidth: 900 }}>
         {/* Header */}
@@ -124,7 +124,7 @@ export default function NewProductPage() {
 
           {/* Pricing */}
           <Section title="💰 Pricing & Stock">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+            <div className="admin-3col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
               <Field label="Original Price (₹)" required>
                 <input className="input-field" style={{ padding: '10px 14px', fontSize: 14 }} type="number" required min="0" step="0.01"
                   value={form.price} onChange={e => update('price', e.target.value)} placeholder="299" />

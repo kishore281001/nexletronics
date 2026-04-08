@@ -25,7 +25,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)', flexDirection: 'row' }}>
+    <div className="admin-page-wrap" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)', flexDirection: 'row' }}>
       <AdminSidebar />
       <main style={{ flex: 1, padding: 'clamp(16px, 3vw, 32px)', overflowY: 'auto', overflowX: 'hidden', maxWidth: '100%' }}>
         {/* Header */}

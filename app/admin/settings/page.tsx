@@ -67,7 +67,7 @@ export default function SettingsPage() {
 
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
+    <div className="admin-page-wrap" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
       <AdminSidebar />
       <main style={{ flex: 1, padding: 32, overflowY: 'auto', maxWidth: 800 }}>
         <div style={{ marginBottom: 32 }}>
@@ -85,7 +85,7 @@ export default function SettingsPage() {
 
         {/* Bank Account */}
         <Section icon={<Building size={16} />} title="Bank Account">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div className="admin-2col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <Field label="Account Holder Name">
               <input className="input-field" style={{ padding: '10px 14px', fontSize: 14 }} value={bank.account_holder} onChange={e => setBank(b => ({ ...b, account_holder: e.target.value }))} placeholder="Your full name" />
             </Field>
@@ -165,7 +165,7 @@ export default function SettingsPage() {
           <Field label="Contact Phone">
             <input className="input-field" style={{ padding: '10px 14px', fontSize: 14 }} value={site.contact_phone} onChange={e => setSite(s => ({ ...s, contact_phone: e.target.value }))} placeholder="+91 98765 43210" />
           </Field>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div className="admin-2col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <Field label="Instagram URL">
               <input className="input-field" style={{ padding: '10px 14px', fontSize: 14 }} value={site.instagram_url} onChange={e => setSite(s => ({ ...s, instagram_url: e.target.value }))} placeholder="https://instagram.com/nexletronics" />
             </Field>
@@ -184,7 +184,7 @@ export default function SettingsPage() {
             <strong style={{ color: 'var(--warning)' }}>Default password:</strong> <code style={{ fontFamily: 'var(--font-mono)', background: 'rgba(255,255,255,0.05)', padding: '1px 5px', borderRadius: 3 }}>nexletronics@admin</code>
             <br />Change it here to something only you know. Minimum 8 characters.
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+          <div className="admin-2col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
             <Field label="Current Password">
               <div style={{ position: 'relative' }}>
                 <Lock size={13} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
