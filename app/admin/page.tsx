@@ -25,9 +25,9 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)', flexDirection: 'row' }}>
       <AdminSidebar />
-      <main style={{ flex: 1, padding: 32, overflowY: 'auto' }}>
+      <main style={{ flex: 1, padding: 'clamp(16px, 3vw, 32px)', overflowY: 'auto', overflowX: 'hidden', maxWidth: '100%' }}>
         {/* Header */}
         <div style={{ marginBottom: 32 }}>
           <h1 style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Dashboard</h1>

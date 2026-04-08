@@ -33,7 +33,7 @@ export default function AdminLoginPage() {
     <div style={{
       minHeight: '100vh', background: 'var(--bg-primary)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: 24, position: 'relative', overflow: 'hidden',
+      padding: '24px 16px', position: 'relative', overflow: 'hidden',
     }}>
       {/* Glows */}
       <div style={{ position: 'absolute', top: '20%', left: '20%', width: 300, height: 300, background: 'radial-gradient(circle, rgba(123,47,255,0.08) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
@@ -73,18 +73,17 @@ export default function AdminLoginPage() {
               <div style={{ position: 'relative' }}>
                 <Lock size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                 <input
-                  autoFocus
                   className="input-field"
                   type={showPass ? 'text' : 'password'}
                   placeholder="Enter admin password"
                   value={password}
                   onChange={e => { setPassword(e.target.value); setError(''); }}
-                  style={{ paddingLeft: 36, paddingRight: 44, paddingTop: 12, paddingBottom: 12, fontSize: 15 }}
+                  style={{ paddingLeft: 36, paddingRight: 44, paddingTop: 13, paddingBottom: 13, fontSize: 16, minHeight: 48 }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: 6, minWidth: 36, minHeight: 36, alignItems: 'center', justifyContent: 'center' }}
                 >
                   {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
@@ -102,9 +101,9 @@ export default function AdminLoginPage() {
               type="submit"
               disabled={loading || !password}
               style={{
-                width: '100%', padding: '13px', fontSize: 15, fontWeight: 700,
+                width: '100%', padding: '15px', fontSize: 16, fontWeight: 700,
                 background: 'linear-gradient(135deg, #7B2FFF, #5B0FDF)',
-                color: '#fff', border: 'none', borderRadius: 10,
+                color: '#fff', border: 'none', borderRadius: 10, minHeight: 52,
                 cursor: loading || !password ? 'not-allowed' : 'pointer',
                 opacity: !password ? 0.6 : 1,
                 transition: 'all 0.2s', fontFamily: 'var(--font-main)',
