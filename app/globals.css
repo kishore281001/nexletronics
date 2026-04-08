@@ -36,6 +36,9 @@ body {
   font-family: var(--font-main);
   min-height: 100vh;
   overflow-x: hidden;
+  /* Prevent horizontal scroll on mobile */
+  width: 100%;
+  max-width: 100vw;
 }
 
 /* Scrollbar */
