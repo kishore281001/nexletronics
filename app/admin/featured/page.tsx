@@ -44,15 +44,15 @@ export default function FeaturedPage() {
   const non_featured = products.filter(p => !p.is_featured);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
+    <div className="admin-page-wrap" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
       <AdminSidebar />
-      <main style={{ flex: 1, padding: 32, overflowY: 'auto' }}>
+      <main style={{ flex: 1, padding: 'clamp(14px, 3vw, 32px)', overflowY: 'auto', overflowX: 'hidden', minWidth: 0 }}>
         <div style={{ marginBottom: 28 }}>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>⭐ Featured Showcase</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Control which products appear in the scrolling showcase panel on your homepage.</p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }} className="featured-grid">
+        <div className="featured-grid">
 
           {/* Currently Featured */}
           <div>
@@ -154,7 +154,8 @@ export default function FeaturedPage() {
         </div>
       </main>
       <style jsx global>{`
-        @media (max-width: 900px) { .featured-grid { grid-template-columns: 1fr !important; } }
+        .featured-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        @media (max-width: 768px) { .featured-grid { grid-template-columns: 1fr !important; } }
       `}</style>
     </div>
   );

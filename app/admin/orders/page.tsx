@@ -35,9 +35,9 @@ export default function AdminOrdersPage() {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
+    <div className="admin-page-wrap" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
       <AdminSidebar />
-      <main style={{ flex: 1, padding: 32, overflowY: 'auto' }}>
+      <main style={{ flex: 1, padding: 'clamp(14px, 3vw, 32px)', overflowY: 'auto', overflowX: 'hidden', minWidth: 0 }}>
         <div style={{ marginBottom: 28 }}>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Orders</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{orders.length} total orders received</p>
@@ -58,7 +58,15 @@ export default function AdminOrdersPage() {
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 380px' : '1fr', gap: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: selected ? 'minmax(0,1fr) 380px' : '1fr', gap: 20 }}
+          className={selected ? 'orders-grid-selected' : ''}>
+          <style jsx global>{`
+            @media (max-width: 768px) {
+              .orders-grid-selected {
+                grid-template-columns: 1fr !important;
+              }
+            }
+          `}</style>
           {/* Orders table */}
           <div className="glass" style={{ borderRadius: 14, border: '1px solid var(--border)', overflow: 'hidden' }}>
             <div style={{ overflowX: 'auto' }}>
