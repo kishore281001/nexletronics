@@ -10,6 +10,30 @@ import Link from 'next/link';
 
 const CATEGORIES = ['Microcontrollers', 'Sensors', 'Displays', 'Motor Drivers', 'Project Kits', 'Passive Components', 'Power Supply', 'Communication Modules', 'Robotics', 'Tools', 'Cables & Connectors', 'Other'];
 
+// ─── DEFINED OUTSIDE COMPONENT so references are stable across re-renders ───
+// If defined inside, React sees a NEW component type every render → unmounts
+// the old one → input loses focus → page jumps to top.
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="glass" style={{ borderRadius: 14, border: '1px solid var(--border)', padding: 24, marginBottom: 20 }}>
+      <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 20, paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function Field({ label, required, children, hint }: { label: string; required?: boolean; children: React.ReactNode; hint?: string }) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, marginBottom: 6 }}>
+        {label} {required && <span style={{ color: 'var(--error)' }}>*</span>}
+      </label>
+      {children}
+      {hint && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{hint}</div>}
+    </div>
+  );
+}
+
 export default function EditProductPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -43,8 +67,13 @@ export default function EditProductPage() {
   const update = (field: string, val: string | boolean) => setForm(f => ({ ...f, [field]: val }));
   const addSpec = () => setSpecs(s => [...s, { key: '', value: '' }]);
   const removeSpec = (idx: number) => setSpecs(s => s.filter((_, i) => i !== idx));
-  const updateSpec = (idx: number, field: 'key' | 'value', val: string) => setSpecs(s => s.map((sp, i) => i === idx ? { ...sp, [field]: val } : sp));
-  const addTag = () => { const t = tagInput.trim().toLowerCase(); if (t && !tags.includes(t)) setTags(prev => [...prev, t]); setTagInput(''); };
+  const updateSpec = (idx: number, field: 'key' | 'value', val: string) =>
+    setSpecs(s => s.map((sp, i) => i === idx ? { ...sp, [field]: val } : sp));
+  const addTag = () => {
+    const t = tagInput.trim().toLowerCase();
+    if (t && !tags.includes(t)) setTags(prev => [...prev, t]);
+    setTagInput('');
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,29 +92,16 @@ export default function EditProductPage() {
     router.push('/admin/products');
   };
 
-  if (!product) return <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>Loading...</div>;
-
-  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div className="glass" style={{ borderRadius: 14, border: '1px solid var(--border)', padding: 24, marginBottom: 20 }}>
-      <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 20, paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>{title}</h3>
-      {children}
-    </div>
-  );
-
-  const Field = ({ label, required, children, hint }: { label: string; required?: boolean; children: React.ReactNode; hint?: string }) => (
-    <div style={{ marginBottom: 16 }}>
-      <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, marginBottom: 6 }}>{label} {required && <span style={{ color: 'var(--error)' }}>*</span>}</label>
-      {children}
-      {hint && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{hint}</div>}
-    </div>
+  if (!product) return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>Loading...</div>
   );
 
   return (
     <div className="admin-page-wrap" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
       <AdminSidebar />
       <main style={{ flex: 1, padding: 'clamp(14px, 3vw, 32px)', overflowY: 'auto', overflowX: 'hidden', minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 32 }}>
-          <Link href="/admin/products" style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--bg-surface)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', textDecoration: 'none' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 28 }}>
+          <Link href="/admin/products" style={{ width: 40, height: 40, borderRadius: 8, background: 'var(--bg-surface)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', textDecoration: 'none', flexShrink: 0 }}>
             <ArrowLeft size={16} />
           </Link>
           <div>
@@ -97,16 +113,20 @@ export default function EditProductPage() {
         <form onSubmit={handleSubmit}>
           <Section title="📦 Basic Information">
             <Field label="Product Name" required>
-              <input className="input-field" style={{ padding: '10px 14px', fontSize: 16, width: '100%' }} required value={form.name} onChange={e => update('name', e.target.value)} />
+              <input className="input-field" style={{ padding: '10px 14px', fontSize: 16, width: '100%' }}
+                required value={form.name} onChange={e => update('name', e.target.value)} />
             </Field>
             <Field label="Short Description" required>
-              <input className="input-field" style={{ padding: '10px 14px', fontSize: 16, width: '100%' }} required value={form.short_description} onChange={e => update('short_description', e.target.value)} />
+              <input className="input-field" style={{ padding: '10px 14px', fontSize: 16, width: '100%' }}
+                required value={form.short_description} onChange={e => update('short_description', e.target.value)} />
             </Field>
             <Field label="Full Description" required>
-              <textarea className="input-field" style={{ padding: '10px 14px', fontSize: 16, minHeight: 120, resize: 'vertical', lineHeight: 1.6, width: '100%' }} required value={form.description} onChange={e => update('description', e.target.value)} />
+              <textarea className="input-field" style={{ padding: '10px 14px', fontSize: 16, minHeight: 120, resize: 'vertical', lineHeight: 1.6, width: '100%' }}
+                required value={form.description} onChange={e => update('description', e.target.value)} />
             </Field>
             <Field label="Category" required>
-              <select className="input-field" style={{ padding: '10px 14px', fontSize: 16, width: '100%' }} required value={form.category} onChange={e => update('category', e.target.value)}>
+              <select className="input-field" style={{ padding: '10px 14px', fontSize: 16, width: '100%' }}
+                required value={form.category} onChange={e => update('category', e.target.value)}>
                 <option value="">Select a category</option>
                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
@@ -115,9 +135,18 @@ export default function EditProductPage() {
 
           <Section title="💰 Pricing & Stock">
             <div className="admin-3col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-              <Field label="Original Price (₹)" required><input className="input-field" style={{ padding: '10px 14px', fontSize: 16, width: '100%' }} type="number" required min="0" step="0.01" value={form.price} onChange={e => update('price', e.target.value)} /></Field>
-              <Field label="Discounted Price (₹)" hint="Leave blank for no discount"><input className="input-field" style={{ padding: '10px 14px', fontSize: 16, width: '100%' }} type="number" min="0" step="0.01" value={form.discount_price} onChange={e => update('discount_price', e.target.value)} /></Field>
-              <Field label="Stock Quantity" required><input className="input-field" style={{ padding: '10px 14px', fontSize: 16, width: '100%' }} type="number" required min="0" value={form.stock_qty} onChange={e => update('stock_qty', e.target.value)} /></Field>
+              <Field label="Original Price (₹)" required>
+                <input className="input-field" style={{ padding: '10px 14px', fontSize: 16, width: '100%' }}
+                  type="number" required min="0" step="0.01" value={form.price} onChange={e => update('price', e.target.value)} />
+              </Field>
+              <Field label="Discounted Price (₹)" hint="Leave blank for no discount">
+                <input className="input-field" style={{ padding: '10px 14px', fontSize: 16, width: '100%' }}
+                  type="number" min="0" step="0.01" value={form.discount_price} onChange={e => update('discount_price', e.target.value)} />
+              </Field>
+              <Field label="Stock Quantity" required>
+                <input className="input-field" style={{ padding: '10px 14px', fontSize: 16, width: '100%' }}
+                  type="number" required min="0" value={form.stock_qty} onChange={e => update('stock_qty', e.target.value)} />
+              </Field>
             </div>
           </Section>
 
@@ -128,24 +157,37 @@ export default function EditProductPage() {
           <Section title="⚡ Technical Specifications">
             {specs.map((spec, i) => (
               <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                <input className="input-field" style={{ padding: '9px 12px', fontSize: 16, flex: '1 1 120px', minWidth: 0 }} placeholder="Spec name" value={spec.key} onChange={e => updateSpec(i, 'key', e.target.value)} />
+                <input className="input-field" style={{ padding: '9px 12px', fontSize: 16, flex: '1 1 120px', minWidth: 0 }}
+                  placeholder="Spec name" value={spec.key} onChange={e => updateSpec(i, 'key', e.target.value)} />
                 <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}>→</span>
-                <input className="input-field" style={{ padding: '9px 12px', fontSize: 16, flex: '1 1 120px', minWidth: 0 }} placeholder="Value" value={spec.value} onChange={e => updateSpec(i, 'value', e.target.value)} />
-                <button type="button" onClick={() => removeSpec(i)} style={{ width: 34, height: 34, borderRadius: 7, background: 'rgba(255,68,68,0.1)', border: 'none', cursor: 'pointer', color: 'var(--error)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><X size={13} /></button>
+                <input className="input-field" style={{ padding: '9px 12px', fontSize: 16, flex: '1 1 120px', minWidth: 0 }}
+                  placeholder="Value" value={spec.value} onChange={e => updateSpec(i, 'value', e.target.value)} />
+                <button type="button" onClick={() => removeSpec(i)}
+                  style={{ width: 36, height: 36, borderRadius: 7, background: 'rgba(255,68,68,0.1)', border: 'none', cursor: 'pointer', color: 'var(--error)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <X size={13} />
+                </button>
               </div>
             ))}
-            <button type="button" onClick={addSpec} className="btn-ghost" style={{ padding: '8px 16px', fontSize: 13 }}><Plus size={13} /> Add Spec</button>
+            <button type="button" onClick={addSpec} className="btn-ghost" style={{ padding: '8px 16px', fontSize: 13 }}>
+              <Plus size={13} /> Add Spec
+            </button>
           </Section>
 
           <Section title="🏷️ Tags">
             <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-              <input className="input-field" style={{ padding: '9px 12px', fontSize: 16, flex: 1, minWidth: 0 }} placeholder="Add tag" value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }} />
-              <button type="button" onClick={addTag} className="btn-ghost" style={{ padding: '9px 16px', fontSize: 13, flexShrink: 0 }}>Add</button>
+              <input className="input-field" style={{ padding: '9px 12px', fontSize: 16, flex: 1, minWidth: 0 }}
+                placeholder="Add tag" value={tagInput} onChange={e => setTagInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }} />
+              <button type="button" onClick={addTag} className="btn-ghost" style={{ padding: '9px 16px', fontSize: 14, flexShrink: 0 }}>Add</button>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {tags.map(tag => (
-                <span key={tag} className="badge badge-purple" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>#{tag}
-                  <button type="button" onClick={() => setTags(t => t.filter(x => x !== tag))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', display: 'flex' }}><X size={10} /></button>
+                <span key={tag} className="badge badge-purple" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  #{tag}
+                  <button type="button" onClick={() => setTags(t => t.filter(x => x !== tag))}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', display: 'flex' }}>
+                    <X size={10} />
+                  </button>
                 </span>
               ))}
             </div>
@@ -153,15 +195,16 @@ export default function EditProductPage() {
 
           <Section title="🔧 Visibility & Featured">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {[
-                { field: 'is_active', label: 'Show on Store', sub: 'Visible to customers', color: 'var(--accent-cyan)' },
-                { field: 'is_featured', label: 'Include in Featured Showcase', sub: 'Appears in homepage panel', color: '#FFD700' },
-              ].map(({ field, label, sub, color }) => (
-                <label key={field} style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
-                  <div style={{ position: 'relative', width: 40, height: 22 }}>
-                    <input type="checkbox" checked={form[field as 'is_active' | 'is_featured']} onChange={e => update(field, e.target.checked)} style={{ opacity: 0, position: 'absolute', width: '100%', height: '100%', cursor: 'pointer', zIndex: 1 }} />
-                    <div style={{ width: 40, height: 22, borderRadius: 11, background: form[field as 'is_active' | 'is_featured'] ? color : 'var(--border)', transition: 'background 0.2s', position: 'relative' }}>
-                      <div style={{ position: 'absolute', width: 16, height: 16, borderRadius: '50%', background: '#fff', top: 3, left: form[field as 'is_active' | 'is_featured'] ? 21 : 3, transition: 'left 0.2s' }} />
+              {([
+                { field: 'is_active' as const, label: 'Show on Store', sub: 'Visible to customers', color: 'var(--accent-cyan)' },
+                { field: 'is_featured' as const, label: 'Featured Showcase', sub: 'Appears in homepage panel', color: '#FFD700' },
+              ]).map(({ field, label, sub, color }) => (
+                <label key={field} style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', minHeight: 44 }}>
+                  <div style={{ position: 'relative', width: 40, height: 22, flexShrink: 0 }}>
+                    <input type="checkbox" checked={form[field]} onChange={e => update(field, e.target.checked)}
+                      style={{ opacity: 0, position: 'absolute', width: '100%', height: '100%', cursor: 'pointer', zIndex: 1 }} />
+                    <div style={{ width: 40, height: 22, borderRadius: 11, background: form[field] ? color : 'var(--border)', transition: 'background 0.2s', position: 'relative' }}>
+                      <div style={{ position: 'absolute', width: 16, height: 16, borderRadius: '50%', background: '#fff', top: 3, left: form[field] ? 21 : 3, transition: 'left 0.2s' }} />
                     </div>
                   </div>
                   <div>
@@ -171,15 +214,15 @@ export default function EditProductPage() {
                 </label>
               ))}
               {form.is_featured && (
-                <div style={{ paddingLeft: 52 }}>
-                  <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, marginBottom: 6 }}>Display Order</label>
-                  <input className="input-field" style={{ padding: '8px 12px', fontSize: 13, maxWidth: 120 }} type="number" min="0" value={form.featured_order} onChange={e => update('featured_order', e.target.value)} />
-                </div>
+                <Field label="Display Order" hint="Lower number = appears first">
+                  <input className="input-field" style={{ padding: '8px 12px', fontSize: 16, maxWidth: 140 }}
+                    type="number" min="0" value={form.featured_order} onChange={e => update('featured_order', e.target.value)} />
+                </Field>
               )}
             </div>
           </Section>
 
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
             <Link href="/admin/products" className="btn-ghost" style={{ padding: '12px 24px', fontSize: 14, textDecoration: 'none' }}>Cancel</Link>
             <button type="submit" disabled={saving} className="btn-primary" style={{ padding: '12px 28px', fontSize: 15 }}>
               {saving ? 'Saving...' : <><Save size={16} /> Save Changes</>}
