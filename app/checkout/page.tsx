@@ -117,7 +117,6 @@ export default function CheckoutPage() {
           },
         };
         const rzp = new window.Razorpay(options);
-        rzp.on('payment.failed', () => showToast('error', 'Payment Failed', 'Transaction cancelled'));
         rzp.open();
         setLoading(false);
       };

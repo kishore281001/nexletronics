@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { getBankSettings, saveBankSettings, getSiteSettings, saveSiteSettings } from '@/lib/store';
-import { setAdminPassword, verifyAdminPassword } from '@/lib/admin-auth-context';
 import { useToast } from '@/lib/toast-context';
 import { BankSettings, SiteSettings } from '@/lib/types';
 import { Building, CreditCard, Globe, CheckCircle, Eye, EyeOff, Info, Lock, Shield, Megaphone } from 'lucide-react';
@@ -55,18 +54,6 @@ export default function SettingsPage() {
 
   const saveBankBtn = async () => { await saveBankSettings(bank); setBankSaved(true); setTimeout(() => setBankSaved(false), 2000); };
   const saveSiteBtn = async () => { await saveSiteSettings(site); setSiteSaved(true); setTimeout(() => setSiteSaved(false), 2000); };
-
-  const changePassword = async () => {
-    setPassError('');
-    const currentOk = await verifyAdminPassword(currentPass);
-    if (!currentOk) { setPassError('Current password is incorrect.'); return; }
-    if (newPass.length < 8) { setPassError('New password must be at least 8 characters.'); return; }
-    if (newPass !== confirmPass) { setPassError('Passwords do not match.'); return; }
-    await setAdminPassword(newPass);
-    setCurrentPass(''); setNewPass(''); setConfirmPass('');
-    setPassSaved(true); setTimeout(() => setPassSaved(false), 2500);
-    showToast('success', '🔒 Password changed!', 'New admin password is active. Use it next time you log in.');
-  };
 
 
   return (
@@ -178,47 +165,6 @@ export default function SettingsPage() {
           </div>
           <button onClick={saveSiteBtn} className="btn-primary" style={{ padding: '10px 24px', fontSize: 14 }}>
             {siteSaved ? <><CheckCircle size={15} /> Saved!</> : 'Save Store Info'}
-          </button>
-        </Section>
-
-        {/* Security — Change Admin Password */}
-        <Section icon={<Shield size={16} />} title="Security — Admin Password">
-          <div style={{ background: 'rgba(255,184,0,0.04)', border: '1px solid rgba(255,184,0,0.15)', borderRadius: 10, padding: '11px 14px', marginBottom: 20, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-            <strong style={{ color: 'var(--warning)' }}>Important:</strong> If you haven't changed the admin password yet, please set a strong, unique password below. Minimum 8 characters.
-          </div>
-          <div className="admin-2col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-            <Field label="Current Password">
-              <div style={{ position: 'relative' }}>
-                <Lock size={13} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                <input className="input-field" style={{ padding: '10px 36px 10px 32px', fontSize: 14 }} type={showCurrentPass ? 'text' : 'password'}
-                  value={currentPass} onChange={e => setCurrentPass(e.target.value)} placeholder="Current password" />
-                <button type="button" onClick={() => setShowCurrentPass(!showCurrentPass)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}>
-                  {showCurrentPass ? <EyeOff size={13} /> : <Eye size={13} />}
-                </button>
-              </div>
-            </Field>
-            <Field label="New Password" hint="Min. 8 characters">
-              <div style={{ position: 'relative' }}>
-                <Lock size={13} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                <input className="input-field" style={{ padding: '10px 36px 10px 32px', fontSize: 14 }} type={showNewPass ? 'text' : 'password'}
-                  value={newPass} onChange={e => setNewPass(e.target.value)} placeholder="New password" />
-                <button type="button" onClick={() => setShowNewPass(!showNewPass)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}>
-                  {showNewPass ? <EyeOff size={13} /> : <Eye size={13} />}
-                </button>
-              </div>
-            </Field>
-          </div>
-          <Field label="Confirm New Password">
-            <input className="input-field" style={{ padding: '10px 14px', fontSize: 14, maxWidth: 340 }} type="password"
-              value={confirmPass} onChange={e => setConfirmPass(e.target.value)} placeholder="Re-enter new password" />
-          </Field>
-          {passError && (
-            <div style={{ fontSize: 13, color: 'var(--error)', padding: '8px 12px', background: 'rgba(255,68,68,0.06)', border: '1px solid rgba(255,68,68,0.2)', borderRadius: 7, marginBottom: 14 }}>
-              ⚠️ {passError}
-            </div>
-          )}
-          <button onClick={changePassword} className="btn-primary" style={{ padding: '10px 24px', fontSize: 14, background: 'linear-gradient(135deg, #7B2FFF, #5B0FDF)' }}>
-            {passSaved ? <><CheckCircle size={15} /> Password Changed!</> : <><Lock size={14} /> Change Password</>}
           </button>
         </Section>
       </main>

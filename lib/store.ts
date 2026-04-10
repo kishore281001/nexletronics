@@ -114,7 +114,10 @@ export async function sendOrderEmail(order: Order): Promise<void> {
   try {
     const settings = await getSiteSettings();
     const adminEmail = settings.contact_email || 'admin@nexletronics.in';
-    await fetch('/api/send-order-email', {
+    // Ensure we use an absolute URL if running on the server
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+    
+    await fetch(`${baseUrl}/api/send-order-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ order, adminEmail }),

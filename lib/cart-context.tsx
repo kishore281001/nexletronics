@@ -1,6 +1,7 @@
 'use client';
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { supabase } from './supabase';
+import { useAuth } from './auth-context';
 import { CartItem, Product } from '@/lib/types';
 
 interface CartContextType {

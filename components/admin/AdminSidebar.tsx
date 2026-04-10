@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useAdminAuth } from '@/lib/admin-auth-context';
+import { useAuth } from '@/lib/auth-context';
 import { LayoutDashboard, Package, ShoppingBag, Star, Settings, LogOut, Zap, ExternalLink, ShieldCheck, Menu, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -16,7 +16,7 @@ const NAV = [
 export default function AdminSidebar() {
   const pathname = usePathname();
   const router   = useRouter();
-  const { adminLogout } = useAdminAuth();
+  const { logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Close drawer on route change
@@ -28,7 +28,7 @@ export default function AdminSidebar() {
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
 
-  const handleLogout = () => { adminLogout(); router.refresh(); };
+  const handleLogout = () => { logout(); router.push('/'); };
 
   const isActive = (href: string) =>
     href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
@@ -53,12 +53,12 @@ export default function AdminSidebar() {
       }}>
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 28, height: 28, background: 'linear-gradient(135deg,#00D4FF,#7B2FFF)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Zap size={13} color="#000" fill="#000" />
+          <div style={{ width: 28, height: 28, background: 'linear-gradient(135deg,var(--accent-cyan),var(--accent-purple))', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Zap size={13} color="#FFF" fill="#FFF" />
           </div>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.5px', lineHeight: 1.2 }}>NEXLETRONICS</div>
-            <div style={{ fontSize: 7, color: '#A855F7', fontFamily: 'var(--font-mono)', letterSpacing: '1.5px' }}>ADMIN PANEL</div>
+            <div style={{ fontSize: 7, color: 'var(--accent-cyan)', fontFamily: 'var(--font-mono)', letterSpacing: '1.5px' }}>ADMIN PANEL</div>
           </div>
         </div>
 
