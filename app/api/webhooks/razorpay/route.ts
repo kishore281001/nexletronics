@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import Razorpay from 'razorpay';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { sendOrderEmail } from '@/lib/store';
 import { createShiprocketOrder } from '@/lib/shiprocket';
 
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       const payment_id = payload.id;
 
       // 1. Mark order as paid in DB
-      const { data: order, error } = await supabase
+      const { data: order, error } = await supabaseAdmin
         .from('orders')
         .update({ status: 'paid', payment_id })
         .eq('razorpay_order_id', razorpay_order_id)
@@ -51,10 +51,10 @@ export async function POST(req: NextRequest) {
 
       // 2. Decrement Stock
       for (const item of order.items) {
-        const { data: prod } = await supabase.from('products').select('stock_qty').eq('id', item.product.id).single();
+        const { data: prod } = await supabaseAdmin.from('products').select('stock_qty').eq('id', item.product.id).single();
         if (prod) {
           const newQty = Math.max(0, (prod.stock_qty || 0) - item.quantity);
-          await supabase.from('products').update({ stock_qty: newQty }).eq('id', item.product.id);
+          await supabaseAdmin.from('products').update({ stock_qty: newQty }).eq('id', item.product.id);
         }
       }
 
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
       // 4. Trigger Shiprocket Fulfillment (runs in background)
       createShiprocketOrder(order).then(async (tracking_id) => {
         if (tracking_id) {
-          await supabase.from('orders').update({ tracking_id }).eq('id', order.id);
+          await supabaseAdmin.from('orders').update({ tracking_id }).eq('id', order.id);
         }
       }).catch(console.error);
 

@@ -104,29 +104,37 @@ export async function POST(request: NextRequest) {
     </div>`;
 
     // Send to admin
+    // Note: If you haven't verified your domain in Resend, use 'onboarding@resend.dev'
+    const fromEmail = 'onboarding@resend.dev'; 
+
     const adminRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: 'Nexletronics <orders@nexletronics.in>',
+        from: `Nexletronics <${fromEmail}>`,
         to: [adminEmail],
         subject: `🛒 New Order ${order.order_number} — ₹${order.total.toLocaleString('en-IN')}`,
         html: emailHtml,
       }),
     });
 
+    const adminData = await adminRes.json();
+    if (!adminRes.ok) console.error('Resend Admin Email Error:', adminData);
+
     // Send to customer
     if (order.user_email && !order.user_email.includes('@guest.')) {
-      await fetch('https://api.resend.com/emails', {
+      const customerRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from: 'Nexletronics <orders@nexletronics.in>',
+          from: `Nexletronics <${fromEmail}>`,
           to: [order.user_email],
           subject: `Order Confirmed! ${order.order_number} ⚡`,
           html: emailHtml,
         }),
       });
+      const customerData = await customerRes.json();
+      if (!customerRes.ok) console.error('Resend Customer Email Error:', customerData);
     }
 
     const result = await adminRes.json();

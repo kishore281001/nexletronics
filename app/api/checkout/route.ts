@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import Razorpay from 'razorpay';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { createShiprocketOrder } from '@/lib/shiprocket';
 
 export async function POST(req: NextRequest) {
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     // 1. Double check the prices in DB to prevent frontend spoofing
     let calculatedSubtotal = 0;
     for (const item of items) {
-      const { data: product } = await supabase
+      const { data: product } = await supabaseAdmin
         .from('products')
         .select('price, discount_price')
         .eq('id', item.product.id)
@@ -42,12 +42,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Generate internal order number
-    const { count } = await supabase.from('orders').select('*', { count: 'exact', head: true });
+    const { count } = await supabaseAdmin.from('orders').select('*', { count: 'exact', head: true });
     const order_number = `NXT-${new Date().getFullYear()}-${String((count ?? 0) + 1).padStart(4, '0')}`;
 
     if (method === 'cod') {
       // Direct insertion for COD, marking as pending
-      const { data, error } = await supabase.from('orders').insert({
+      const { data, error } = await supabaseAdmin.from('orders').insert({
         order_number, user_id: user_id || 'guest', user_email, user_name,
         items, subtotal: calculatedSubtotal, shipping: calculatedShipping, total: calculatedTotal,
         status: 'pending', shipping_address: address
@@ -58,10 +58,10 @@ export async function POST(req: NextRequest) {
       // Decrement Stock
       try {
         for (const item of items) {
-          const { data: prod } = await supabase.from('products').select('stock_qty').eq('id', item.product.id).single();
+          const { data: prod } = await supabaseAdmin.from('products').select('stock_qty').eq('id', item.product.id).single();
           if (prod) {
             const newQty = Math.max(0, (prod.stock_qty || 0) - item.quantity);
-            await supabase.from('products').update({ stock_qty: newQty }).eq('id', item.product.id);
+            await supabaseAdmin.from('products').update({ stock_qty: newQty }).eq('id', item.product.id);
           }
         }
       } catch (e) {
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       // Trigger Shiprocket Fulfillment (runs in background)
       createShiprocketOrder(data).then(async (tracking_id) => {
         if (tracking_id) {
-          await supabase.from('orders').update({ tracking_id }).eq('id', data.id);
+          await supabaseAdmin.from('orders').update({ tracking_id }).eq('id', data.id);
         }
       }).catch(console.error);
 
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
     });
 
     // 3. Pre-create the order in DB as "pending" with razorpay_order_id
-    const { data: nxtOrder, error } = await supabase.from('orders').insert({
+    const { data: nxtOrder, error } = await supabaseAdmin.from('orders').insert({
       order_number, user_id: user_id || 'guest', user_email, user_name,
       items, subtotal: calculatedSubtotal, shipping: calculatedShipping, total: calculatedTotal,
       status: 'pending', shipping_address: address, razorpay_order_id: rzpOrder.id
