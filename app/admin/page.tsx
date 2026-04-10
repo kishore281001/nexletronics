@@ -11,12 +11,15 @@ export default function AdminDashboard() {
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
 
   useEffect(() => {
-    const products = getProducts();
-    const orders = getOrders();
-    const revenue = orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0);
-    const pending = orders.filter(o => o.status === 'pending').length;
-    setStats({ products: products.length, orders: orders.length, revenue, pending });
-    setRecentOrders(orders.slice(0, 5));
+    async function loadData() {
+      const products = await getProducts();
+      const orders = await getOrders();
+      const revenue = orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0);
+      const pending = orders.filter(o => o.status === 'pending').length;
+      setStats({ products: products.length, orders: orders.length, revenue, pending });
+      setRecentOrders(orders.slice(0, 5));
+    }
+    loadData();
   }, []);
 
   const statusColor: Record<string, string> = {

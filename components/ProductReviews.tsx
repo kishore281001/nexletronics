@@ -100,11 +100,11 @@ function WriteReviewForm({ productId, userId, userName, isVerified, onSubmit }: 
   const [error, setError]   = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  const submit = () => {
+  const submit = async () => {
     if (!rating)                     { setError('Please select a star rating.'); return; }
     if (body.trim().length < 10)     { setError('Review must be at least 10 characters.'); return; }
 
-    addReview({
+    await addReview({
       product_id: productId, user_id: userId, user_name: userName,
       rating: rating as 1|2|3|4|5, body: body.trim(),
       verified_purchase: isVerified,
@@ -177,16 +177,17 @@ export default function ProductReviews({ productId }: { productId: string }) {
   const [isVerified, setIsVerified]   = useState(false);
   const [showForm, setShowForm]       = useState(false);
 
-  const load = () => {
-    setReviews(getReviews(productId));
-    setSummary(getRatingSummary(productId));
+  const load = async () => {
+    setReviews(await getReviews(productId));
+    setSummary(await getRatingSummary(productId));
     if (user) {
-      setHasReviewed(!!getUserReview(productId, user.id));
-      setIsVerified(isVerifiedPurchase(productId, user.id));
+      setHasReviewed(!!(await getUserReview(productId, user.id)));
+      setIsVerified(await isVerifiedPurchase(productId, user.id));
     }
   };
 
-  useEffect(() => { load(); }, [productId, user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, [productId, user?.id]);
 
   const onReviewSubmit = () => { load(); setShowForm(false); };
 

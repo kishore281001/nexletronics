@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import ImageUploader from '@/components/admin/ImageUploader';
 import { addProduct } from '@/lib/store';
+import { useToast } from '@/lib/toast-context';
 import { Plus, X, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -33,6 +34,7 @@ function Field({ label, required, children, hint }: { label: string; required?: 
 
 export default function NewProductPage() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [saving, setSaving] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [specs, setSpecs] = useState<{ key: string; value: string }[]>([{ key: '', value: '' }]);
@@ -59,7 +61,7 @@ export default function NewProductPage() {
     e.preventDefault();
     setSaving(true);
     const specsObj = Object.fromEntries(specs.filter(s => s.key && s.value).map(s => [s.key, s.value]));
-    addProduct({
+    const result = await addProduct({
       name: form.name, short_description: form.short_description, description: form.description,
       price: parseFloat(form.price),
       discount_price: form.discount_price ? parseFloat(form.discount_price) : undefined,
@@ -68,6 +70,11 @@ export default function NewProductPage() {
       is_featured: form.is_featured, featured_order: parseInt(form.featured_order) || 0, tags,
     });
     setSaving(false);
+    if (!result) {
+      showToast('error', 'Failed to save', 'Product could not be created. Check your connection and try again.');
+      return;
+    }
+    showToast('success', 'Product created!', `${form.name} has been added to your store.`);
     router.push('/admin/products');
   };
 

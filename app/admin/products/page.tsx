@@ -11,17 +11,17 @@ export default function AdminProductsPage() {
   const [search, setSearch] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
-  const load = () => setProducts(getProducts());
+  const load = async () => setProducts(await getProducts());
   useEffect(() => { load(); }, []);
 
-  const handleDelete = (id: string) => {
-    deleteProduct(id);
+  const handleDelete = async (id: string) => {
+    await deleteProduct(id);
     setConfirmDelete(null);
     load();
   };
 
-  const toggleActive = (id: string, val: boolean) => {
-    updateProduct(id, { is_active: val });
+  const toggleActive = async (id: string, val: boolean) => {
+    await updateProduct(id, { is_active: val });
     load();
   };
 

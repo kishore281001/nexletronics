@@ -15,7 +15,7 @@ const AdminAuthContext = createContext<AdminAuthContextType>({
 
 const ADMIN_SESSION_KEY = 'nxt_admin_session';
 const ADMIN_HASH_KEY    = 'nxt_admin_hash';      // stores SHA-256 hash, never plain text
-const DEFAULT_PASSWORD  = 'nexletronics@admin';
+const DEFAULT_PASSWORD  = process.env.NEXT_PUBLIC_ADMIN_DEFAULT_PASSWORD || 'nexletronics@admin';
 
 // ── SHA-256 helper using Web Crypto API (no libraries needed) ──
 async function sha256(text: string): Promise<string> {

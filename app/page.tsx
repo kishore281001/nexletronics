@@ -4,8 +4,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
-import { getProducts, getFeaturedProducts, getSiteSettings } from '@/lib/store';
-import { onStoreUpdate } from '@/lib/sync';
+import { getProducts, getOrders, getFeaturedProducts, getSiteSettings } from '@/lib/store';
 import { Product, SiteSettings } from '@/lib/types';
 import {
   Zap, ArrowRight, ShieldCheck, Truck, Package, Cpu,
@@ -123,7 +122,7 @@ const CATEGORIES = [
   { name: 'Sensors', slug: 'Sensors', icon: <Radio size={22} />, color: '#7B2FFF', desc: 'Ultrasonic, IR, DHT & more' },
   { name: 'Displays', slug: 'Displays', icon: <Monitor size={22} />, color: '#FFD700', desc: 'OLED, LCD, TFT & more' },
   { name: 'Motor Drivers', slug: 'Motor Drivers', icon: <RotateCcw size={22} />, color: '#00FF88', desc: 'L298N, TB6612 & more' },
-  { name: 'Project Kits', slug: 'Kits', icon: <Package size={22} />, color: '#FF6B6B', desc: 'Complete DIY project kits' },
+  { name: 'Project Kits', slug: 'Project Kits', icon: <Package size={22} />, color: '#FF6B6B', desc: 'Complete DIY project kits' },
   { name: 'Passive Components', slug: 'Passive Components', icon: <Zap size={22} />, color: '#FFB800', desc: 'Resistors, Caps, LEDs & more' },
 ];
 
@@ -132,18 +131,19 @@ export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
 
-  const loadData = () => {
-    setAllProducts(getProducts().filter(p => p.is_active));
-    setFeaturedProducts(getFeaturedProducts());
-    setSettings(getSiteSettings());
+  const [orderCount, setOrderCount] = useState(0);
+
+  const loadData = async () => {
+    const products = (await getProducts()).filter(p => p.is_active);
+    setAllProducts(products);
+    setFeaturedProducts(await getFeaturedProducts());
+    setSettings(await getSiteSettings());
+    const orders = await getOrders();
+    setOrderCount(orders.length);
   };
 
   useEffect(() => {
     loadData();
-    // Listen for changes from admin tab — auto-refresh without page reload
-    const unsub = onStoreUpdate(loadData);
-    return unsub;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const newArrivals = [...allProducts].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 4);
@@ -180,14 +180,19 @@ export default function HomePage() {
               <Link href="/products" className="btn-primary" style={{ padding: '14px 28px', fontSize: 15, textDecoration: 'none', borderRadius: 10 }}>
                 <Zap size={16} /> Shop Now
               </Link>
-              <Link href="/products?cat=Kits" className="btn-secondary" style={{ padding: '14px 28px', fontSize: 15, textDecoration: 'none', borderRadius: 10 }}>
+              <Link href="/products?cat=Project+Kits" className="btn-secondary" style={{ padding: '14px 28px', fontSize: 15, textDecoration: 'none', borderRadius: 10 }}>
                 View Project Kits <ArrowRight size={16} />
               </Link>
             </div>
 
             {/* Stats */}
             <div style={{ display: 'flex', gap: 40, marginTop: 52, flexWrap: 'wrap' }}>
-              {[['500+', 'Products'], ['1000+', 'Orders'], ['4.9★', 'Rating'], ['Pan-India', 'Delivery']].map(([val, label]) => (
+              {[
+                [allProducts.length > 0 ? `${allProducts.length}+` : '—', 'Products'],
+                [orderCount > 0 ? `${orderCount}+` : '—', 'Orders'],
+                ['4.9★', 'Rating'],
+                ['Pan-India', 'Delivery'],
+              ].map(([val, label]) => (
                 <div key={label}>
                   <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>{val}</div>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{label}</div>

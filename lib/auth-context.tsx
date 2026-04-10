@@ -1,5 +1,7 @@
 'use client';
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { supabase } from './supabase';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 export interface User {
   id: string;
@@ -10,38 +12,35 @@ export interface User {
   created_at: string;
 }
 
-interface RegisteredAccount {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  created_at: string;
-}
-
 interface AuthContextType {
   user: User | null;
-  login: (email: string) => 'ok' | 'not_found';
-  register: (email: string, name: string, phone?: string) => 'ok' | 'already_exists';
-  logout: () => void;
+  login: (email: string, password: string) => Promise<'ok' | 'not_found' | 'error'>;
+  register: (email: string, password: string, name: string, phone?: string) => Promise<'ok' | 'needs_verification' | 'already_exists' | 'error'>;
+  loginWithGoogle: () => Promise<void>;
+  verifySignupOtp: (email: string, token: string) => Promise<'ok' | 'invalid' | 'error'>;
+  logout: () => Promise<void>;
   isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  login: () => 'not_found',
-  register: () => 'ok',
-  logout: () => {},
+  login: async () => 'not_found',
+  register: async () => 'ok',
+  loginWithGoogle: async () => {},
+  verifySignupOtp: async () => 'error',
+  logout: async () => {},
   isLoading: true,
 });
 
-// Helper – get all registered accounts (our local "user DB")
-function getAccounts(): RegisteredAccount[] {
-  if (typeof window === 'undefined') return [];
-  const raw = localStorage.getItem('nxt_accounts');
-  return raw ? JSON.parse(raw) : [];
-}
-function saveAccounts(accounts: RegisteredAccount[]) {
-  localStorage.setItem('nxt_accounts', JSON.stringify(accounts));
+function supabaseToUser(sbUser: SupabaseUser): User {
+  return {
+    id: sbUser.id,
+    name: sbUser.user_metadata?.name ?? sbUser.email?.split('@')[0] ?? 'User',
+    email: sbUser.email ?? '',
+    phone: sbUser.user_metadata?.phone,
+    avatar: sbUser.user_metadata?.avatar_url,
+    created_at: sbUser.created_at,
+  };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -49,54 +48,78 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('nxt_user');
-    if (stored) setUser(JSON.parse(stored));
-    setIsLoading(false);
+    // Get current session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ? supabaseToUser(session.user) : null);
+      setIsLoading(false);
+    });
+
+    // Listen for auth changes (login/logout/session refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ? supabaseToUser(session.user) : null);
+      setIsLoading(false);
+      // Notify other components (e.g. CartProvider)
+      window.dispatchEvent(new Event('nxt_auth_change'));
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  /** Sign in with email. Returns 'ok' if found, 'not_found' if no account. */
-  const login = (email: string): 'ok' | 'not_found' => {
-    const accounts = getAccounts();
-    const found = accounts.find(a => a.email.toLowerCase() === email.toLowerCase());
-    if (!found) return 'not_found';
-    const sessionUser: User = { ...found };
-    localStorage.setItem('nxt_user', JSON.stringify(sessionUser));
-    setUser(sessionUser);
-    window.dispatchEvent(new Event('nxt_auth_change')); // notify CartProvider same-tab
+  const login = async (email: string, password: string): Promise<'ok' | 'not_found' | 'error'> => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      if (error.message.includes('Invalid login') || error.message.includes('user not found')) return 'not_found';
+      console.error('login error:', error);
+      return 'error';
+    }
     return 'ok';
   };
 
-  /** Create a new account. Returns 'already_exists' if email is taken. */
-  const register = (email: string, name: string, phone?: string): 'ok' | 'already_exists' => {
-    const accounts = getAccounts();
-    const exists = accounts.find(a => a.email.toLowerCase() === email.toLowerCase());
-    if (exists) return 'already_exists';
-
-    const newAccount: RegisteredAccount = {
-      id: crypto.randomUUID(),
-      name,
+  const register = async (email: string, password: string, name: string, phone?: string): Promise<'ok' | 'needs_verification' | 'already_exists' | 'error'> => {
+    const { data, error } = await supabase.auth.signUp({
       email,
-      phone,
-      created_at: new Date().toISOString(),
-    };
-    saveAccounts([...accounts, newAccount]);
-
-    // Auto-login after registration
-    const sessionUser: User = { ...newAccount };
-    localStorage.setItem('nxt_user', JSON.stringify(sessionUser));
-    setUser(sessionUser);
-    window.dispatchEvent(new Event('nxt_auth_change')); // notify CartProvider same-tab
+      password,
+      options: {
+        data: { name, phone },
+        emailRedirectTo: `${window.location.origin}/account`,
+      },
+    });
+    if (error) {
+      if (error.message.includes('already registered') || error.message.includes('already exists')) return 'already_exists';
+      console.error('register error:', error);
+      return 'error';
+    }
+    if (data.user && !data.session) {
+      return 'needs_verification';
+    }
     return 'ok';
   };
 
-  const logout = () => {
-    localStorage.removeItem('nxt_user');
-    setUser(null);
-    window.dispatchEvent(new Event('nxt_auth_change')); // notify CartProvider same-tab
+  const loginWithGoogle = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/account`,
+      }
+    });
+  };
+
+  const verifySignupOtp = async (email: string, token: string): Promise<'ok' | 'invalid' | 'error'> => {
+    const { error } = await supabase.auth.verifyOtp({ email, token, type: 'signup' });
+    if (error) {
+      if (error.message.includes('expired') || error.message.includes('invalid')) return 'invalid';
+      console.error('verifyOtp error:', error);
+      return 'error';
+    }
+    return 'ok';
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, register, loginWithGoogle, verifySignupOtp, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

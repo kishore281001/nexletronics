@@ -11,13 +11,15 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/';
-  const { login, register } = useAuth();
+  const { login, register, loginWithGoogle, verifySignupOtp } = useAuth();
   const { showToast } = useToast();
 
   const [tab, setTab] = useState<'login' | 'signup'>('login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -30,16 +32,15 @@ function LoginContent() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!email.trim() || !password) return;
     setError('');
     setLoading(true);
-    await new Promise(r => setTimeout(r, 600));
 
-    const result = login(email.trim());
+    const result = await login(email.trim(), password);
     setLoading(false);
 
-    if (result === 'not_found') {
-      setError('No account found with this email. Please create an account first.');
+    if (result === 'not_found' || result === 'error') {
+      setError('Invalid email or password.');
       return;
     }
     showToast('success', 'Welcome back! 👋', 'You are now signed in.');
@@ -48,12 +49,11 @@ function LoginContent() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !name.trim()) return;
+    if (!email.trim() || !name.trim() || !password) return;
     setError('');
     setLoading(true);
-    await new Promise(r => setTimeout(r, 700));
 
-    const result = register(email.trim(), name.trim(), phone.trim() || undefined);
+    const result = await register(email.trim(), password, name.trim(), phone.trim() || undefined);
     setLoading(false);
 
     if (result === 'already_exists') {
@@ -61,10 +61,38 @@ function LoginContent() {
       // Show the "already has account" message with switch-to-login button
       setSuccess('EXISTS');
       return;
+    } else if (result === 'needs_verification') {
+      setError('');
+      setSuccess('VERIFY');
+      return;
+    } else if (result === 'error') {
+       setError('Failed to create account. Please try again.');
+       return;
     }
 
-    // Success — auto-logged in
+    // Success — auto-logged in (if email confirmation is off)
     showToast('success', `Welcome to Nexletronics, ${name.split(' ')[0]}! 🎉`, 'Your account has been created and you are now signed in.');
+    router.push(redirect);
+  };
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otp.trim()) return;
+    setError('');
+    setLoading(true);
+
+    const result = await verifySignupOtp(email.trim(), otp.trim());
+    setLoading(false);
+
+    if (result === 'invalid') {
+      setError('Invalid or expired code. Please check your email carefully.');
+      return;
+    } else if (result === 'error') {
+      setError('An error occurred during verification.');
+      return;
+    }
+
+    showToast('success', 'Email Verified! ✅', 'Your account is now fully active.');
     router.push(redirect);
   };
 
@@ -128,6 +156,16 @@ function LoginContent() {
                     </div>
                   </div>
 
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, marginBottom: 6 }}>Password *</label>
+                    <div style={{ position: 'relative' }}>
+                      <ShieldCheck size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                      <input className="input-field" style={{ paddingLeft: 36, paddingRight: 12, paddingTop: 11, paddingBottom: 11, fontSize: 14 }}
+                        type="password" placeholder="••••••••" required minLength={6}
+                        value={password} onChange={e => { setPassword(e.target.value); setError(''); }} />
+                    </div>
+                  </div>
+
                   {/* Error */}
                   {error && (
                     <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '10px 12px', background: 'rgba(255,68,68,0.07)', border: '1px solid rgba(255,68,68,0.2)', borderRadius: 8, marginBottom: 14 }}>
@@ -161,8 +199,34 @@ function LoginContent() {
                 <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>Create your account</h1>
                 <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 24 }}>Join Nexletronics to track orders and save addresses</p>
 
-                {/* Already exists message */}
-                {success === 'EXISTS' ? (
+                {/* OTP Verification Phase */}
+                {success === 'VERIFY' ? (
+                  <div style={{ padding: '18px', background: 'rgba(0,212,255,0.06)', border: '1px solid rgba(0,212,255,0.2)', borderRadius: 12, textAlign: 'center' }}>
+                    <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(0,212,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                      <CheckCircle size={20} color="var(--accent-cyan)" />
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Verify your email</div>
+                    <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.5 }}>
+                      We sent a 6-digit code to <strong style={{ color: 'var(--accent-cyan)' }}>{email}</strong>. Enter it below to activate your account.
+                    </div>
+                    <form onSubmit={handleVerify}>
+                      <div style={{ marginBottom: 14 }}>
+                        <input className="input-field" style={{ padding: '11px', fontSize: 18, textAlign: 'center', letterSpacing: '8px', fontFamily: 'var(--font-mono)' }}
+                          placeholder="000000" maxLength={6} required
+                          value={otp} onChange={e => { setOtp(e.target.value.replace(/[^0-9]/g, '')); setError(''); }} />
+                      </div>
+                      {error && (
+                        <div style={{ fontSize: 13, color: 'var(--error)', marginBottom: 14 }}>{error}</div>
+                      )}
+                      <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '12px', fontSize: 14, borderRadius: 10 }}>
+                        {loading ? 'Verifying...' : 'Verify Email'}
+                      </button>
+                    </form>
+                    <button onClick={() => setSuccess('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 12, marginTop: 14, fontFamily: 'var(--font-main)' }}>
+                      Wrong email address? Go back
+                    </button>
+                  </div>
+                ) : success === 'EXISTS' ? (
                   <div style={{ padding: '18px', background: 'rgba(255,184,0,0.06)', border: '1px solid rgba(255,184,0,0.2)', borderRadius: 12, textAlign: 'center' }}>
                     <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,184,0,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
                       <AlertCircle size={20} color="var(--warning)" />
@@ -200,6 +264,16 @@ function LoginContent() {
                       </div>
                     </div>
 
+                    <div style={{ marginBottom: 14 }}>
+                      <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, marginBottom: 6 }}>Password *</label>
+                      <div style={{ position: 'relative' }}>
+                        <ShieldCheck size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                        <input className="input-field" style={{ paddingLeft: 36, paddingRight: 12, paddingTop: 11, paddingBottom: 11, fontSize: 14 }}
+                          type="password" placeholder="Min. 6 characters" required minLength={6}
+                          value={password} onChange={e => { setPassword(e.target.value); setError(''); setSuccess(''); }} />
+                      </div>
+                    </div>
+
                     <div style={{ marginBottom: 18 }}>
                       <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, marginBottom: 6 }}>Phone Number <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
                       <div style={{ position: 'relative' }}>
@@ -223,7 +297,7 @@ function LoginContent() {
                   </form>
                 )}
 
-                {success !== 'EXISTS' && (
+                {(success !== 'EXISTS' && success !== 'VERIFY') && (
                   <p style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', marginTop: 16 }}>
                     Already have an account?{' '}
                     <button onClick={() => switchTab('login')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent-cyan)', fontWeight: 600, fontSize: 13, fontFamily: 'var(--font-main)' }}>
@@ -235,7 +309,7 @@ function LoginContent() {
             )}
 
             {/* Divider + Google */}
-            {success !== 'EXISTS' && (
+            {(success !== 'EXISTS' && success !== 'VERIFY') && (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0' }}>
                   <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
@@ -243,7 +317,7 @@ function LoginContent() {
                   <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
                 </div>
                 <button
-                  onClick={() => showToast('info', 'Google Login Coming Soon', 'Connect Supabase to enable Google OAuth')}
+                  onClick={() => loginWithGoogle()}
                   style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px solid var(--border-bright)', background: 'var(--bg-elevated)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, color: 'var(--text-primary)', fontSize: 14, fontWeight: 500, fontFamily: 'var(--font-main)', transition: 'all 0.2s' }}
                   onMouseEnter={e => { (e.currentTarget).style.borderColor = 'rgba(0,212,255,0.3)'; }}
                   onMouseLeave={e => { (e.currentTarget).style.borderColor = 'var(--border-bright)'; }}

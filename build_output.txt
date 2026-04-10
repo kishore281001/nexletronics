@@ -1,0 +1,28 @@
+
+> nexletronics@0.1.0 build
+> next build
+
+▲ Next.js 16.2.2 (Turbopack)
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 3.1s
+  Running TypeScript ...
+  Finished TypeScript in 5.4s ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/21) ...
+Error occurred prerendering page "/_not-found". Read more: https://nextjs.org/docs/messages/prerender-error
+Error: supabaseUrl is required.
+    at <unknown> (C:\Users\Kishore\.gemini\antigravity\scratch\nexletronics\.next\server\chunks\ssr\_0v12asu._.js:37:43463)
+    at new cy (C:\Users\Kishore\.gemini\antigravity\scratch\nexletronics\.next\server\chunks\ssr\_0v12asu._.js:37:43714)
+    at module evaluation (C:\Users\Kishore\.gemini\antigravity\scratch\nexletronics\.next\server\chunks\ssr\_0v12asu._.js:37:48052)
+    at instantiateModule (C:\Users\Kishore\.gemini\antigravity\scratch\nexletronics\.next\server\chunks\ssr\[turbopack]_runtime.js:853:9)
+    at getOrInstantiateModuleFromParent (C:\Users\Kishore\.gemini\antigravity\scratch\nexletronics\.next\server\chunks\ssr\[turbopack]_runtime.js:877:12)
+    at Context.esmImport [as i] (C:\Users\Kishore\.gemini\antigravity\scratch\nexletronics\.next\server\chunks\ssr\[turbopack]_runtime.js:281:20)
+    at module evaluation (C:\Users\Kishore\.gemini\antigravity\scratch\nexletronics\.next\server\chunks\ssr\[root-of-the-server]__117v-yr._.js:1:3454)
+    at instantiateModule (C:\Users\Kishore\.gemini\antigravity\scratch\nexletronics\.next\server\chunks\ssr\[turbopack]_runtime.js:853:9)
+    at getOrInstantiateModuleFromParent (C:\Users\Kishore\.gemini\antigravity\scratch\nexletronics\.next\server\chunks\ssr\[turbopack]_runtime.js:877:12)
+    at Context.commonJsRequire [as r] (C:\Users\Kishore\.gemini\antigravity\scratch\nexletronics\.next\server\chunks\ssr\[turbopack]_runtime.js:302:12) {
+  digest: '1840266079'
+}
+Export encountered an error on /_not-found/page: /_not-found, exiting the build.
+⨯ Next.js build worker exited with code: 1 and signal: null

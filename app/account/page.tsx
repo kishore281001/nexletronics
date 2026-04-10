@@ -5,8 +5,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
-import { getOrders, updateOrderStatus } from '@/lib/store';
-import { onStoreUpdate } from '@/lib/sync';
+import { getOrdersByUser, updateOrderStatus } from '@/lib/store';
+import { supabase } from '@/lib/supabase';
 import { Order } from '@/lib/types';
 import Link from 'next/link';
 import { User, ShoppingBag, Package, LogOut, Edit, Clock, XCircle, X } from 'lucide-react';
@@ -36,15 +36,12 @@ export default function AccountPage() {
 
   useEffect(() => {
     if (user) {
-      const loadOrders = () => {
-        const allOrders = getOrders();
-        setOrders(allOrders.filter(o => o.user_email === user.email));
+      const loadOrders = async () => {
+        setOrders(await getOrdersByUser(user.id));
       };
       loadOrders();
       setEditName(user.name);
       setEditPhone(user.phone || '');
-      const unsub = onStoreUpdate(loadOrders);
-      return unsub;
     }
   }, [user]);
 
@@ -54,17 +51,25 @@ export default function AccountPage() {
     router.push('/');
   };
 
-  const handleCancel = (orderId: string) => {
-    updateOrderStatus(orderId, 'cancelled');
+  const handleCancel = async (orderId: string) => {
+    await updateOrderStatus(orderId, 'cancelled');
     setConfirmCancel(null);
+    if (user) {
+      setOrders(await getOrdersByUser(user.id));
+    }
     showToast('success', 'Order cancelled', 'Your order has been cancelled successfully.');
   };
 
-  const saveProfile = () => {
+  const saveProfile = async () => {
     if (!user) return;
-    const updated = { ...user, name: editName, phone: editPhone };
-    localStorage.setItem('nxt_user', JSON.stringify(updated));
-    showToast('success', 'Profile updated!');
+    const { error } = await supabase.auth.updateUser({
+      data: { name: editName, phone: editPhone },
+    });
+    if (error) {
+      showToast('error', 'Update failed', error.message);
+      return;
+    }
+    showToast('success', 'Profile updated!', 'Your changes have been saved.');
   };
 
   if (isLoading || !user) {

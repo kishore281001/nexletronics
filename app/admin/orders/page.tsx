@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { getOrders, updateOrderStatus } from '@/lib/store';
-import { onStoreUpdate } from '@/lib/sync';
 import { Order } from '@/lib/types';
 import { Package, Truck, CheckCircle, Clock, XCircle, Eye, Banknote, CreditCard } from 'lucide-react';
 
@@ -18,17 +17,15 @@ export default function AdminOrdersPage() {
   const [selected, setSelected] = useState<Order | null>(null);
   const [trackingInput, setTrackingInput] = useState('');
 
-  const load = () => setOrders(getOrders());
+  const load = async () => setOrders(await getOrders());
   useEffect(() => {
     load();
-    const unsub = onStoreUpdate(load);
-    return unsub;
   }, []);
 
   const filtered = filter === 'all' ? orders : orders.filter(o => o.status === filter);
 
-  const handleStatusUpdate = (id: string, status: Order['status']) => {
-    updateOrderStatus(id, status, trackingInput || undefined);
+  const handleStatusUpdate = async (id: string, status: Order['status']) => {
+    await updateOrderStatus(id, status, trackingInput || undefined);
     load();
     if (selected?.id === id) setSelected(prev => prev ? { ...prev, status, tracking_id: trackingInput || prev.tracking_id } : null);
     setTrackingInput('');

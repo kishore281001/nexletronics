@@ -1,124 +1,129 @@
-// Local storage based data store - works without Supabase
-// Replace with Supabase calls once you have your API keys
+// Supabase-backed data store
+// All functions are async — data lives in the cloud, not localStorage
 
+import { supabase } from './supabase';
 import { Product, Order, BankSettings, SiteSettings, Review, OrderFeedback } from './types';
-import { broadcastUpdate } from './sync';
 
-// ── PRODUCTS ──────────────────────────────────────────────
-export function getProducts(): Product[] {
-  if (typeof window === 'undefined') return [];
-  const data = localStorage.getItem('nxt_products');
-  return data ? JSON.parse(data) : getSampleProducts();
+// ─────────────────────────────────────────────
+// PRODUCTS
+// ─────────────────────────────────────────────
+
+export async function getProducts(): Promise<Product[]> {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getProducts:', error); return []; }
+  return data as Product[];
 }
 
-export function saveProducts(products: Product[]) {
-  localStorage.setItem('nxt_products', JSON.stringify(products));
-  broadcastUpdate('nxt_products');
+export async function getProductById(id: string): Promise<Product | null> {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error) { console.error('getProductById:', error); return null; }
+  return data as Product;
 }
 
-export function getProductById(id: string): Product | null {
-  return getProducts().find(p => p.id === id) || null;
+export async function addProduct(product: Omit<Product, 'id' | 'created_at'>): Promise<Product | null> {
+  const { data, error } = await supabase
+    .from('products')
+    .insert(product)
+    .select()
+    .single();
+  if (error) { console.error('addProduct:', error); return null; }
+  return data as Product;
 }
 
-export function addProduct(product: Omit<Product, 'id' | 'created_at'>): Product {
-  const products = getProducts();
-  const newProduct: Product = {
-    ...product,
-    id: crypto.randomUUID(),
-    created_at: new Date().toISOString(),
-  };
-  products.push(newProduct);
-  saveProducts(products);
-  return newProduct;
+export async function updateProduct(id: string, updates: Partial<Product>): Promise<Product | null> {
+  const { data, error } = await supabase
+    .from('products')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) { console.error('updateProduct:', error); return null; }
+  return data as Product;
 }
 
-export function updateProduct(id: string, updates: Partial<Product>): Product | null {
-  const products = getProducts();
-  const idx = products.findIndex(p => p.id === id);
-  if (idx === -1) return null;
-  products[idx] = { ...products[idx], ...updates };
-  saveProducts(products);
-  return products[idx];
+export async function deleteProduct(id: string): Promise<void> {
+  const { error } = await supabase.from('products').delete().eq('id', id);
+  if (error) console.error('deleteProduct:', error);
 }
 
-export function deleteProduct(id: string) {
-  const products = getProducts().filter(p => p.id !== id);
-  saveProducts(products);
+export async function getFeaturedProducts(): Promise<Product[]> {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('is_featured', true)
+    .eq('is_active', true)
+    .order('featured_order', { ascending: true });
+  if (error) { console.error('getFeaturedProducts:', error); return []; }
+  return data as Product[];
 }
 
-export function getFeaturedProducts(): Product[] {
-  return getProducts()
-    .filter(p => p.is_featured && p.is_active)
-    .sort((a, b) => a.featured_order - b.featured_order);
+// ─────────────────────────────────────────────
+// ORDERS
+// ─────────────────────────────────────────────
+
+export async function getOrders(): Promise<Order[]> {
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getOrders:', error); return []; }
+  return data as Order[];
 }
 
-// ── ORDERS ──────────────────────────────────────────────
-export function getOrders(): Order[] {
-  if (typeof window === 'undefined') return [];
-  const data = localStorage.getItem('nxt_orders');
-  return data ? JSON.parse(data) : [];
+export async function getOrdersByUser(userId: string): Promise<Order[]> {
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getOrdersByUser:', error); return []; }
+  return data as Order[];
 }
 
-export function saveOrders(orders: Order[]) {
-  localStorage.setItem('nxt_orders', JSON.stringify(orders));
-  broadcastUpdate('nxt_orders');
-}
-
-export function addOrder(order: Omit<Order, 'id' | 'order_number' | 'created_at'>): Order {
-  const orders = getOrders();
-  const count = orders.length + 1;
+export async function addOrder(order: Omit<Order, 'id' | 'order_number' | 'created_at'>): Promise<Order | null> {
+  // Generate order number: NXT-2026-0001
+  const { count } = await supabase.from('orders').select('*', { count: 'exact', head: true });
+  const num = (count ?? 0) + 1;
   const year = new Date().getFullYear();
-  const newOrder: Order = {
-    ...order,
-    id: crypto.randomUUID(),
-    order_number: `NXT-${year}-${String(count).padStart(4, '0')}`,
-    created_at: new Date().toISOString(),
-  };
-  orders.unshift(newOrder);
-  saveOrders(orders);
-  return newOrder;
+  const order_number = `NXT-${year}-${String(num).padStart(4, '0')}`;
+
+  const { data, error } = await supabase
+    .from('orders')
+    .insert({ ...order, order_number })
+    .select()
+    .single();
+  if (error) { console.error('addOrder:', error); return null; }
+  return data as Order;
 }
 
-export function updateOrderStatus(id: string, status: Order['status'], tracking_id?: string) {
-  const orders = getOrders();
-  const idx = orders.findIndex(o => o.id === id);
-  if (idx === -1) return;
-  orders[idx] = { ...orders[idx], status, ...(tracking_id ? { tracking_id } : {}) };
-  saveOrders(orders);
+export async function updateOrderStatus(id: string, status: Order['status'], tracking_id?: string): Promise<void> {
+  const updates: Partial<Order> = { status };
+  if (tracking_id) updates.tracking_id = tracking_id;
+  const { error } = await supabase.from('orders').update(updates).eq('id', id);
+  if (error) console.error('updateOrderStatus:', error);
 }
 
-// ── BANK SETTINGS ──────────────────────────────────────────────
-export function getBankSettings(): BankSettings {
-  if (typeof window === 'undefined') return defaultBankSettings;
-  const data = localStorage.getItem('nxt_bank');
-  return data ? JSON.parse(data) : defaultBankSettings;
+export async function decrementStock(items: { product: { id: string }; quantity: number }[]): Promise<void> {
+  for (const item of items) {
+    // Fetch current stock then decrement
+    const { data } = await supabase.from('products').select('stock_qty').eq('id', item.product.id).single();
+    if (data) {
+      const newQty = Math.max(0, (data.stock_qty || 0) - item.quantity);
+      await supabase.from('products').update({ stock_qty: newQty }).eq('id', item.product.id);
+    }
+  }
 }
 
-export function saveBankSettings(settings: BankSettings) {
-  localStorage.setItem('nxt_bank', JSON.stringify(settings));
-  broadcastUpdate('nxt_bank');
-}
-
-const defaultBankSettings: BankSettings = {
-  account_holder: '',
-  account_number: '',
-  ifsc_code: '',
-  bank_name: '',
-  razorpay_key: '',
-  razorpay_secret: '',
-};
-
-// ── SITE SETTINGS ──────────────────────────────────────────────
-export function getSiteSettings(): SiteSettings {
-  if (typeof window === 'undefined') return defaultSiteSettings;
-  const data = localStorage.getItem('nxt_site');
-  return data ? JSON.parse(data) : defaultSiteSettings;
-}
-
-export function saveSiteSettings(settings: SiteSettings) {
-  localStorage.setItem('nxt_site', JSON.stringify(settings));
-  broadcastUpdate('nxt_site');
-}
+// ─────────────────────────────────────────────
+// SITE SETTINGS
+// ─────────────────────────────────────────────
 
 const defaultSiteSettings: SiteSettings = {
   announcement_text: '⚡ Free shipping on orders above ₹999! Use code NEXFREE',
@@ -130,47 +135,93 @@ const defaultSiteSettings: SiteSettings = {
   twitter_url: '',
 };
 
-// ── REVIEWS ──────────────────────────────────────────────
-export function getReviews(productId: string): Review[] {
-  if (typeof window === 'undefined') return [];
-  const data = localStorage.getItem('nxt_reviews');
-  const all: Review[] = data ? JSON.parse(data) : [];
-  return all.filter(r => r.product_id === productId).sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  );
+export async function getSiteSettings(): Promise<SiteSettings> {
+  const { data, error } = await supabase
+    .from('site_settings')
+    .select('*')
+    .eq('id', 1)
+    .single();
+  if (error || !data) return defaultSiteSettings;
+  return data as SiteSettings;
 }
 
-function getAllReviews(): Review[] {
-  if (typeof window === 'undefined') return [];
-  const data = localStorage.getItem('nxt_reviews');
-  return data ? JSON.parse(data) : [];
+export async function saveSiteSettings(settings: SiteSettings): Promise<void> {
+  const { error } = await supabase
+    .from('site_settings')
+    .upsert({ id: 1, ...settings });
+  if (error) console.error('saveSiteSettings:', error);
 }
 
-export function addReview(review: Omit<Review, 'id' | 'created_at'>): Review {
-  const all = getAllReviews();
-  const newReview: Review = {
-    ...review,
-    id: crypto.randomUUID(),
-    created_at: new Date().toISOString(),
-  };
-  all.unshift(newReview);
-  localStorage.setItem('nxt_reviews', JSON.stringify(all));
-  broadcastUpdate('nxt_reviews');
-  return newReview;
+// ─────────────────────────────────────────────
+// BANK / PAYMENT SETTINGS (stored in Supabase, not client)
+// ─────────────────────────────────────────────
+
+const defaultBankSettings: BankSettings = {
+  account_holder: '', account_number: '', ifsc_code: '',
+  bank_name: '', razorpay_key: '', razorpay_secret: '',
+};
+
+export async function getBankSettings(): Promise<BankSettings> {
+  const { data, error } = await supabase
+    .from('bank_settings')
+    .select('*')
+    .eq('id', 1)
+    .single();
+  if (error || !data) return defaultBankSettings;
+  return data as BankSettings;
 }
 
-export function getUserReview(productId: string, userId: string): Review | null {
-  return getAllReviews().find(r => r.product_id === productId && r.user_id === userId) || null;
+export async function saveBankSettings(settings: BankSettings): Promise<void> {
+  const { error } = await supabase
+    .from('bank_settings')
+    .upsert({ id: 1, ...settings });
+  if (error) console.error('saveBankSettings:', error);
 }
 
-// Check if user has bought this product (for "Verified Purchase" badge)
-export function isVerifiedPurchase(productId: string, userId: string): boolean {
-  const orders = getOrders();
-  return orders.some(o =>
-    o.user_id === userId &&
-    (o.status === 'delivered' || o.status === 'shipped' || o.status === 'processing' || o.status === 'paid') &&
-    o.items.some(item => item.product.id === productId)
-  );
+// ─────────────────────────────────────────────
+// REVIEWS
+// ─────────────────────────────────────────────
+
+export async function getReviews(productId: string): Promise<Review[]> {
+  const { data, error } = await supabase
+    .from('reviews')
+    .select('*')
+    .eq('product_id', productId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getReviews:', error); return []; }
+  return data as Review[];
+}
+
+export async function addReview(review: Omit<Review, 'id' | 'created_at'>): Promise<Review | null> {
+  const { data, error } = await supabase
+    .from('reviews')
+    .insert(review)
+    .select()
+    .single();
+  if (error) { console.error('addReview:', error); return null; }
+  return data as Review;
+}
+
+export async function getUserReview(productId: string, userId: string): Promise<Review | null> {
+  const { data, error } = await supabase
+    .from('reviews')
+    .select('*')
+    .eq('product_id', productId)
+    .eq('user_id', userId)
+    .single();
+  if (error) return null;
+  return data as Review;
+}
+
+export async function isVerifiedPurchase(productId: string, userId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from('orders')
+    .select('id')
+    .eq('user_id', userId)
+    .in('status', ['delivered', 'shipped', 'processing', 'paid'])
+    .contains('items', [{ product: { id: productId } }])
+    .limit(1);
+  return (data?.length ?? 0) > 0;
 }
 
 export interface RatingSummary {
@@ -179,8 +230,8 @@ export interface RatingSummary {
   counts: Record<1 | 2 | 3 | 4 | 5, number>;
 }
 
-export function getRatingSummary(productId: string): RatingSummary {
-  const reviews = getReviews(productId);
+export async function getRatingSummary(productId: string): Promise<RatingSummary> {
+  const reviews = await getReviews(productId);
   const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
   let sum = 0;
   reviews.forEach(r => { counts[r.rating]++; sum += r.rating; });
@@ -191,131 +242,54 @@ export function getRatingSummary(productId: string): RatingSummary {
   };
 }
 
-// ── ORDER FEEDBACK ──────────────────────────────────────────────
-export function getOrderFeedback(orderId: string): OrderFeedback | null {
-  if (typeof window === 'undefined') return null;
-  const data = localStorage.getItem('nxt_feedback');
-  const all: OrderFeedback[] = data ? JSON.parse(data) : [];
-  return all.find(f => f.order_id === orderId) || null;
+// ─────────────────────────────────────────────
+// ORDER FEEDBACK
+// ─────────────────────────────────────────────
+
+export async function getOrderFeedback(orderId: string): Promise<OrderFeedback | null> {
+  const { data, error } = await supabase
+    .from('order_feedback')
+    .select('*')
+    .eq('order_id', orderId)
+    .single();
+  if (error) return null;
+  return data as OrderFeedback;
 }
 
-export function addOrderFeedback(feedback: Omit<OrderFeedback, 'id' | 'created_at'>): OrderFeedback {
-  const data = localStorage.getItem('nxt_feedback');
-  const all: OrderFeedback[] = data ? JSON.parse(data) : [];
-  const newFeedback: OrderFeedback = {
-    ...feedback,
-    id: crypto.randomUUID(),
-    created_at: new Date().toISOString(),
-  };
-  all.unshift(newFeedback);
-  localStorage.setItem('nxt_feedback', JSON.stringify(all));
-  return newFeedback;
+export async function addOrderFeedback(feedback: Omit<OrderFeedback, 'id' | 'created_at'>): Promise<OrderFeedback | null> {
+  const { data, error } = await supabase
+    .from('order_feedback')
+    .insert(feedback)
+    .select()
+    .single();
+  if (error) { console.error('addOrderFeedback:', error); return null; }
+  return data as OrderFeedback;
 }
 
-// ── SAMPLE DATA ──────────────────────────────────────────────
-function getSampleProducts(): Product[] {
-  const samples: Product[] = [
-    {
-      id: 'sample-1',
-      name: 'Arduino Nano V3.0',
-      short_description: 'Compact microcontroller for prototyping',
-      description: 'The Arduino Nano V3.0 is a compact, breadboard-friendly development board based on the ATmega328P. Perfect for small-scale projects and prototyping. Comes with USB-B mini connector and all standard Arduino pins accessible.',
-      price: 349,
-      discount_price: 299,
-      stock_qty: 50,
-      category: 'Microcontrollers',
-      images: [],
-      specs: { 'Microcontroller': 'ATmega328P', 'Clock Speed': '16 MHz', 'Flash Memory': '32KB', 'Operating Voltage': '5V', 'Digital I/O': '22', 'Analog Input': '8' },
-      is_active: true,
-      is_featured: true,
-      featured_order: 1,
-      tags: ['arduino', 'microcontroller', 'atmega'],
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: 'sample-2',
-      name: 'HC-SR04 Ultrasonic Sensor',
-      short_description: 'Distance measurement 2cm to 400cm',
-      description: 'The HC-SR04 ultrasonic sensor module provides 2cm to 400cm non-contact measurement with ranging accuracy of up to 3mm. Includes ultrasonic transmitter, receiver and control circuit.',
-      price: 149,
-      discount_price: 119,
-      stock_qty: 120,
-      category: 'Sensors',
-      images: [],
-      specs: { 'Operating Voltage': '5V DC', 'Range': '2cm - 400cm', 'Accuracy': '3mm', 'Frequency': '40Hz', 'Trigger Input': '10µS TTL pulse' },
-      is_active: true,
-      is_featured: true,
-      featured_order: 2,
-      tags: ['sensor', 'ultrasonic', 'distance'],
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: 'sample-3',
-      name: 'ESP32 Dev Kit V1',
-      short_description: 'WiFi + Bluetooth dual-core microcontroller',
-      description: 'The ESP32 Development Kit is a powerful dual-core microcontroller with built-in WiFi and Bluetooth. Ideal for IoT projects, home automation, and wireless communication applications.',
-      price: 599,
-      discount_price: 499,
-      stock_qty: 35,
-      category: 'Microcontrollers',
-      images: [],
-      specs: { 'CPU': 'Dual-core 240MHz', 'Flash': '4MB', 'RAM': '520KB', 'WiFi': '802.11 b/g/n', 'Bluetooth': '4.2 BLE', 'GPIO': '34' },
-      is_active: true,
-      is_featured: true,
-      featured_order: 3,
-      tags: ['esp32', 'wifi', 'iot', 'bluetooth'],
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: 'sample-4',
-      name: '0.96" OLED Display Module',
-      short_description: 'I2C SSD1306 128x64 pixel display',
-      description: 'Compact 0.96 inch OLED display module with SSD1306 driver chip. 128x64 pixel resolution with I2C interface. Works with Arduino, ESP32, Raspberry Pi. High contrast, wide viewing angle.',
-      price: 229,
-      discount_price: 189,
-      stock_qty: 75,
-      category: 'Displays',
-      images: [],
-      specs: { 'Size': '0.96 inch', 'Resolution': '128x64', 'Protocol': 'I2C (SPI optional)', 'Voltage': '3.3V-5V', 'Driver': 'SSD1306', 'Color': 'White/Blue' },
-      is_active: true,
-      is_featured: true,
-      featured_order: 4,
-      tags: ['oled', 'display', 'i2c', 'ssd1306'],
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: 'sample-5',
-      name: 'L298N Motor Driver Module',
-      short_description: 'Dual H-Bridge motor driver for DC & stepper motors',
-      description: 'The L298N motor driver module uses the L298N dual H-Bridge IC to control 2 DC motors or 1 stepper motor. Supports 5V to 35V motor supply and up to 2A per channel.',
-      price: 179,
-      stock_qty: 60,
-      category: 'Motor Drivers',
-      images: [],
-      specs: { 'Input Voltage': '5V-35V', 'Output Current': '2A per channel', 'Logic Voltage': '5V', 'Max Power': '25W', 'Control': 'TTL compatible' },
-      is_active: true,
-      is_featured: false,
-      featured_order: 0,
-      tags: ['motor', 'driver', 'l298n', 'robotics'],
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: 'sample-6',
-      name: 'Resistor Kit — 600 pcs',
-      short_description: '30 values, 1/4W carbon film resistors',
-      description: 'Complete resistor kit with 600 pieces across 30 common values from 10Ω to 1MΩ. 1/4 Watt, 5% tolerance carbon film resistors. Organized in a labeled storage box.',
-      price: 249,
-      stock_qty: 200,
-      category: 'Passive Components',
-      images: [],
-      specs: { 'Count': '600 pcs', 'Values': '30 types', 'Power Rating': '1/4W', 'Tolerance': '5%', 'Type': 'Carbon Film' },
-      is_active: true,
-      is_featured: false,
-      featured_order: 0,
-      tags: ['resistor', 'kit', 'passive', 'components'],
-      created_at: new Date().toISOString(),
-    },
-  ];
-  saveProducts(samples);
-  return samples;
+// ─────────────────────────────────────────────
+// IMAGE STORAGE (Supabase Storage — free 1GB)
+// ─────────────────────────────────────────────
+
+export async function uploadProductImage(file: File): Promise<string | null> {
+  // Compress/resize is done client-side before calling this
+  const ext = file.name.split('.').pop() ?? 'jpg';
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const path = `products/${filename}`;
+
+  const { error } = await supabase.storage
+    .from('product-images')
+    .upload(path, file, { cacheControl: '3600', upsert: false });
+
+  if (error) { console.error('uploadProductImage:', error); return null; }
+
+  const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+  return data.publicUrl;
+}
+
+export async function deleteProductImage(url: string): Promise<void> {
+  // Extract path from URL like: .../product-images/products/filename.jpg
+  const match = url.match(/product-images\/(.+)$/);
+  if (!match) return;
+  const { error } = await supabase.storage.from('product-images').remove([match[1]]);
+  if (error) console.error('deleteProductImage:', error);
 }

@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
-import { addOrder } from '@/lib/store';
+import { addOrder, decrementStock } from '@/lib/store';
 import { Address } from '@/lib/types';
 import { Package, CreditCard, CheckCircle, ArrowRight, Truck } from 'lucide-react';
 
@@ -64,14 +64,20 @@ export default function CheckoutPage() {
     setLoading(true);
 
     if (method === 'cod') {
-      const order = addOrder({
+      const order = await addOrder({
         user_id: user?.id || 'guest',
         user_email: user?.email || address.phone + '@guest.nexletronics.in',
         user_name: user?.name || address.name,
         items, subtotal: total, shipping, total: grandTotal,
         status: 'pending', shipping_address: address,
       });
+      if (!order) {
+        setLoading(false);
+        showToast('error', 'Error', 'Failed to place order.');
+        return;
+      }
       setOrderId(order.order_number);
+      await decrementStock(items);
       clearCart();
       setStep('success');
       setLoading(false);
@@ -94,8 +100,8 @@ export default function CheckoutPage() {
           description: `Order - ${items.length} item(s)`,
           prefill: { name: address.name, contact: address.phone },
           theme: { color: '#00D4FF' },
-          handler: (response: { razorpay_payment_id: string }) => {
-            const order = addOrder({
+          handler: async (response: { razorpay_payment_id: string }) => {
+            const order = await addOrder({
               user_id: user?.id || 'guest',
               user_email: user?.email || address.phone + '@guest.nexletronics.in',
               user_name: user?.name || address.name,
@@ -103,7 +109,13 @@ export default function CheckoutPage() {
               status: 'paid', payment_id: response.razorpay_payment_id,
               shipping_address: address,
             });
+            if (!order) {
+              setLoading(false);
+              showToast('error', 'Error', 'Failed to place order.');
+              return;
+            }
             setOrderId(order.order_number);
+            await decrementStock(items);
             clearCart();
             setStep('success');
             setLoading(false);

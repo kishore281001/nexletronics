@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getSiteSettings } from '@/lib/store';
-import { onStoreUpdate } from '@/lib/sync';
 import { Zap, Mail, Phone } from 'lucide-react';
 
 const InstagramIcon = () => (
@@ -23,16 +22,16 @@ export default function Footer() {
   const [twitter, setTwitter] = useState('');
 
   useEffect(() => {
-    const load = () => {
-      const s = getSiteSettings();
-      if (s.contact_email) setEmail(s.contact_email);
-      if (s.contact_phone) setPhone(s.contact_phone);
-      setInstagram(s.instagram_url || '');
-      setTwitter(s.twitter_url || '');
+    const load = async () => {
+      const s = await getSiteSettings();
+      if (s) {
+        if (s.contact_email) setEmail(s.contact_email);
+        if (s.contact_phone) setPhone(s.contact_phone);
+        setInstagram(s.instagram_url || '');
+        setTwitter(s.twitter_url || '');
+      }
     };
     load();
-    const unsub = onStoreUpdate(load);
-    return unsub;
   }, []);
 
   return (

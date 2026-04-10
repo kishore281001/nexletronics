@@ -6,7 +6,6 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import { getProducts } from '@/lib/store';
-import { onStoreUpdate } from '@/lib/sync';
 import { Product } from '@/lib/types';
 import { Search, X, SlidersHorizontal, Package } from 'lucide-react';
 
@@ -22,8 +21,8 @@ function ProductsContent() {
   const [maxPrice, setMaxPrice] = useState(10000);
   const [showFilters, setShowFilters] = useState(false);
 
-  const loadProducts = () => {
-    const all = getProducts().filter(p => p.is_active);
+  const loadProducts = async () => {
+    const all = (await getProducts()).filter(p => p.is_active);
     setProducts(all);
   };
 
@@ -31,9 +30,8 @@ function ProductsContent() {
     loadProducts();
     const cat = searchParams.get('cat');
     if (cat) setCategory(cat);
-    // Auto-refresh when admin adds/edits products
-    const unsub = onStoreUpdate(loadProducts);
-    return unsub;
+    const q = searchParams.get('q');
+    if (q) setSearch(q);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 

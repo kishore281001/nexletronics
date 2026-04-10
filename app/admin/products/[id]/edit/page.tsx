@@ -50,18 +50,21 @@ export default function EditProductPage() {
   });
 
   useEffect(() => {
-    const p = getProductById(id);
-    if (!p) { router.push('/admin/products'); return; }
-    setProduct(p);
-    setForm({
-      name: p.name, short_description: p.short_description, description: p.description,
-      price: String(p.price), discount_price: p.discount_price ? String(p.discount_price) : '',
-      stock_qty: String(p.stock_qty), category: p.category,
-      is_active: p.is_active, is_featured: p.is_featured, featured_order: String(p.featured_order),
-    });
-    setSpecs(Object.entries(p.specs).map(([key, value]) => ({ key, value })));
-    setTags(p.tags);
-    setImageUrls(p.images);
+    async function load() {
+      const p = await getProductById(id);
+      if (!p) { router.push('/admin/products'); return; }
+      setProduct(p);
+      setForm({
+        name: p.name, short_description: p.short_description, description: p.description,
+        price: String(p.price), discount_price: p.discount_price ? String(p.discount_price) : '',
+        stock_qty: String(p.stock_qty), category: p.category,
+        is_active: p.is_active, is_featured: p.is_featured, featured_order: String(p.featured_order),
+      });
+      setSpecs(Object.entries(p.specs).map(([key, value]) => ({ key, value })));
+      setTags(p.tags);
+      setImageUrls(p.images);
+    }
+    load();
   }, [id, router]);
 
   const update = (field: string, val: string | boolean) => setForm(f => ({ ...f, [field]: val }));
@@ -75,11 +78,11 @@ export default function EditProductPage() {
     setTagInput('');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     const specsObj = Object.fromEntries(specs.filter(s => s.key && s.value).map(s => [s.key, s.value]));
-    updateProduct(id, {
+    await updateProduct(id, {
       name: form.name, short_description: form.short_description, description: form.description,
       price: parseFloat(form.price),
       discount_price: form.discount_price ? parseFloat(form.discount_price) : undefined,

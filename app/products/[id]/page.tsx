@@ -24,11 +24,14 @@ export default function ProductDetailPage() {
   const { showToast } = useToast();
 
   useEffect(() => {
-    const p = getProductById(id);
-    if (!p) { router.push('/products'); return; }
-    setProduct(p);
-    const rel = getProducts().filter(x => x.id !== id && x.category === p.category && x.is_active).slice(0, 4);
-    setRelated(rel);
+    async function load() {
+      const p = await getProductById(id);
+      if (!p) { router.push('/products'); return; }
+      setProduct(p);
+      const rel = (await getProducts()).filter(x => x.id !== id && x.category === p.category && x.is_active).slice(0, 4);
+      setRelated(rel);
+    }
+    load();
   }, [id, router]);
 
   if (!product) return (

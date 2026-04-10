@@ -1,5 +1,6 @@
 'use client';
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { supabase } from './supabase';
 import { CartItem, Product } from '@/lib/types';
 
 interface CartContextType {
@@ -14,59 +15,31 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | null>(null);
 
-// Cart key is tied to the current logged-in user so guest and user carts are separate
-function getCartKey(): string {
-  if (typeof window === 'undefined') return 'nxt_cart_guest';
-  const user = localStorage.getItem('nxt_user');
-  if (user) {
-    try {
-      const parsed = JSON.parse(user);
-      return `nxt_cart_${parsed.id}`;
-    } catch {
-      return 'nxt_cart_guest';
-    }
-  }
-  return 'nxt_cart_guest';
-}
-
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [cartKey, setCartKey] = useState('nxt_cart_guest');
 
-  // Load cart from the correct key on mount
-  useEffect(() => {
-    const key = getCartKey();
+  // Derive the correct cart key from the Supabase session
+  const syncCartKey = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const key = session?.user ? `nxt_cart_${session.user.id}` : 'nxt_cart_guest';
     setCartKey(key);
     const saved = localStorage.getItem(key);
     setItems(saved ? JSON.parse(saved) : []);
   }, []);
 
-  // Listen for auth changes (login / logout) and switch to the correct cart
+  // Load the correct cart on mount
+  useEffect(() => { syncCartKey(); }, [syncCartKey]);
+
+  // Re-sync cart on auth changes (login / logout) via custom event from AuthProvider
   useEffect(() => {
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === 'nxt_user') {
-        const newKey = getCartKey();
-        setCartKey(newKey);
-        const saved = localStorage.getItem(newKey);
-        setItems(saved ? JSON.parse(saved) : []);
-      }
-    };
+    const handleAuthChange = () => { syncCartKey(); };
 
-    // Also listen for same-tab auth changes via a custom event
-    const handleAuthChange = () => {
-      const newKey = getCartKey();
-      setCartKey(newKey);
-      const saved = localStorage.getItem(newKey);
-      setItems(saved ? JSON.parse(saved) : []);
-    };
-
-    window.addEventListener('storage', handleStorage);
     window.addEventListener('nxt_auth_change', handleAuthChange);
     return () => {
-      window.removeEventListener('storage', handleStorage);
       window.removeEventListener('nxt_auth_change', handleAuthChange);
     };
-  }, []);
+  }, [syncCartKey]);
 
   const save = (newItems: CartItem[]) => {
     setItems(newItems);

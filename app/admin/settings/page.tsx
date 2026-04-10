@@ -46,12 +46,15 @@ export default function SettingsPage() {
   const [showNewPass, setShowNewPass] = useState(false);
 
   useEffect(() => {
-    setBank(getBankSettings());
-    setSite(getSiteSettings());
+    async function load() {
+      setBank(await getBankSettings());
+      setSite(await getSiteSettings());
+    }
+    load();
   }, []);
 
-  const saveBankBtn = () => { saveBankSettings(bank); setBankSaved(true); setTimeout(() => setBankSaved(false), 2000); };
-  const saveSiteBtn = () => { saveSiteSettings(site); setSiteSaved(true); setTimeout(() => setSiteSaved(false), 2000); };
+  const saveBankBtn = async () => { await saveBankSettings(bank); setBankSaved(true); setTimeout(() => setBankSaved(false), 2000); };
+  const saveSiteBtn = async () => { await saveSiteSettings(site); setSiteSaved(true); setTimeout(() => setSiteSaved(false), 2000); };
 
   const changePassword = async () => {
     setPassError('');
@@ -76,10 +79,10 @@ export default function SettingsPage() {
         </div>
 
         {/* Info banner */}
-        <div style={{ background: 'rgba(0, 212, 255, 0.05)', border: '1px solid rgba(0, 212, 255, 0.15)', borderRadius: 10, padding: '12px 16px', marginBottom: 24, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-          <Info size={14} color="var(--accent-cyan)" style={{ marginTop: 1, flexShrink: 0 }} />
+        <div style={{ background: 'rgba(0, 255, 136, 0.04)', border: '1px solid rgba(0, 255, 136, 0.15)', borderRadius: 10, padding: '12px 16px', marginBottom: 24, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          <Info size={14} color="var(--success)" style={{ marginTop: 1, flexShrink: 0 }} />
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-            <strong style={{ color: 'var(--accent-cyan)' }}>Data is stored locally on this browser.</strong> Once you connect Supabase, all settings will sync to the cloud. For now, don't clear browser data to keep your settings.
+            <strong style={{ color: 'var(--success)' }}>Connected to Supabase.</strong> All settings are stored in your Supabase database and synced across devices. Changes take effect immediately.
           </div>
         </div>
 
@@ -181,8 +184,7 @@ export default function SettingsPage() {
         {/* Security — Change Admin Password */}
         <Section icon={<Shield size={16} />} title="Security — Admin Password">
           <div style={{ background: 'rgba(255,184,0,0.04)', border: '1px solid rgba(255,184,0,0.15)', borderRadius: 10, padding: '11px 14px', marginBottom: 20, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-            <strong style={{ color: 'var(--warning)' }}>Default password:</strong> <code style={{ fontFamily: 'var(--font-mono)', background: 'rgba(255,255,255,0.05)', padding: '1px 5px', borderRadius: 3 }}>nexletronics@admin</code>
-            <br />Change it here to something only you know. Minimum 8 characters.
+            <strong style={{ color: 'var(--warning)' }}>Important:</strong> If you haven't changed the admin password yet, please set a strong, unique password below. Minimum 8 characters.
           </div>
           <div className="admin-2col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
             <Field label="Current Password">

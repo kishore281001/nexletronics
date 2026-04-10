@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useCart } from '@/lib/cart-context';
 import { useAuth } from '@/lib/auth-context';
 import { getSiteSettings } from '@/lib/store';
-import { onStoreUpdate } from '@/lib/sync';
 import { ShoppingCart, Search, Zap, X, ChevronDown, User, Package, LogOut, Menu } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -37,13 +36,14 @@ export default function Navbar() {
   useEffect(() => { setMobileMenuOpen(false); setUserMenuOpen(false); }, [pathname]);
 
   useEffect(() => {
-    const load = () => {
-      const s = getSiteSettings();
-      setAnnouncement(s.announcement_text);
-      setShowAnnouncement(s.show_announcement);
+    const load = async () => {
+      const s = await getSiteSettings();
+      if (s) {
+        setAnnouncement(s.announcement_text);
+        setShowAnnouncement(s.show_announcement);
+      }
     };
     load();
-    return onStoreUpdate(load);
   }, []);
 
   useEffect(() => {

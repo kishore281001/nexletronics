@@ -2,13 +2,11 @@
 import { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { getOrders, updateOrderStatus } from '@/lib/store';
-import { onStoreUpdate } from '@/lib/sync';
+import { getOrders, updateOrderStatus, getOrderFeedback, addOrderFeedback } from '@/lib/store';
 import { useToast } from '@/lib/toast-context';
 import { Order } from '@/lib/types';
 import Link from 'next/link';
 import { Package, Truck, CheckCircle, Clock, XCircle, MapPin, AlertTriangle, X, CreditCard, Banknote, ShieldCheck, ChevronDown, ChevronUp, Star, Send, MessageSquare } from 'lucide-react';
-import { getOrderFeedback, addOrderFeedback } from '@/lib/store';
 import { useAuth } from '@/lib/auth-context';
 
 // ─── Whether an order is Cash on Delivery ────────────────────────────
@@ -146,8 +144,16 @@ function FeedbackWidget({ order, userId }: { order: Order; userId: string }) {
   const [productRating, setProductRating]   = useState(0);
   const [comment, setComment] = useState('');
   const [submitted, setSubmitted] = useState(false);
-  const [existing] = useState(() => getOrderFeedback(order.id));
+  const [existing, setExisting] = useState<any>(null);
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    async function loadFbk() {
+      const fb = await getOrderFeedback(order.id);
+      setExisting(fb);
+    }
+    loadFbk();
+  }, [order.id]);
 
   if (existing || submitted) {
     return (
@@ -161,9 +167,9 @@ function FeedbackWidget({ order, userId }: { order: Order; userId: string }) {
     );
   }
 
-  const submit = () => {
+  const submit = async () => {
     if (!deliveryRating || !productRating) return;
-    addOrderFeedback({ order_id: order.id, user_id: userId, delivery_rating: deliveryRating as 1|2|3|4|5, product_rating: productRating as 1|2|3|4|5, comment: comment.trim() });
+    await addOrderFeedback({ order_id: order.id, user_id: userId, delivery_rating: deliveryRating as 1|2|3|4|5, product_rating: productRating as 1|2|3|4|5, comment: comment.trim() });
     setSubmitted(true);
   };
 
@@ -234,15 +240,13 @@ export default function OrdersPage() {
   const { showToast } = useToast();
   const { user } = useAuth();
 
-  const load = () => setOrders(getOrders());
+  const load = async () => setOrders(await getOrders());
   useEffect(() => {
     load();
-    const unsub = onStoreUpdate(load);
-    return unsub;
   }, []);
 
-  const handleCancel = (orderId: string) => {
-    updateOrderStatus(orderId, 'cancelled');
+  const handleCancel = async (orderId: string) => {
+    await updateOrderStatus(orderId, 'cancelled');
     setConfirmCancel(null);
     load();
     showToast('success', 'Order cancelled', 'Your order has been cancelled. Refund within 5–7 days if paid online.');

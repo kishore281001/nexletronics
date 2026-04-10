@@ -11,34 +11,34 @@ export default function FeaturedPage() {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [saved, setSaved] = useState(false);
 
-  const load = () => {
-    setProducts(getProducts().filter(p => p.is_active));
-    setFeatured(getFeaturedProducts());
-    setSettings(getSiteSettings());
+  const load = async () => {
+    setProducts((await getProducts()).filter(p => p.is_active));
+    setFeatured(await getFeaturedProducts());
+    setSettings(await getSiteSettings());
   };
 
   useEffect(() => { load(); }, []);
 
-  const toggleFeatured = (product: Product) => {
+  const toggleFeatured = async (product: Product) => {
     const newOrder = product.is_featured ? 0 : (featured.length + 1);
-    updateProduct(product.id, { is_featured: !product.is_featured, featured_order: newOrder });
-    load();
+    await updateProduct(product.id, { is_featured: !product.is_featured, featured_order: newOrder });
+    await load();
   };
 
-  const moveOrder = (productId: string, dir: 'up' | 'down') => {
+  const moveOrder = async (productId: string, dir: 'up' | 'down') => {
     const idx = featured.findIndex(p => p.id === productId);
     if (dir === 'up' && idx > 0) {
-      updateProduct(featured[idx].id, { featured_order: idx - 1 });
-      updateProduct(featured[idx - 1].id, { featured_order: idx });
+      await updateProduct(featured[idx].id, { featured_order: idx - 1 });
+      await updateProduct(featured[idx - 1].id, { featured_order: idx });
     } else if (dir === 'down' && idx < featured.length - 1) {
-      updateProduct(featured[idx].id, { featured_order: idx + 1 });
-      updateProduct(featured[idx + 1].id, { featured_order: idx });
+      await updateProduct(featured[idx].id, { featured_order: idx + 1 });
+      await updateProduct(featured[idx + 1].id, { featured_order: idx });
     }
-    load();
+    await load();
   };
 
-  const handleSettingsSave = () => {
-    if (settings) { saveSiteSettings(settings); setSaved(true); setTimeout(() => setSaved(false), 2000); }
+  const handleSettingsSave = async () => {
+    if (settings) { await saveSiteSettings(settings); setSaved(true); setTimeout(() => setSaved(false), 2000); }
   };
 
   const non_featured = products.filter(p => !p.is_featured);
