@@ -18,27 +18,27 @@ function CircuitBg() {
       <svg width="100%" height="100%" style={{ opacity: 0.04 }}>
         <defs>
           <pattern id="circuit" width="120" height="120" patternUnits="userSpaceOnUse">
-            <line x1="60" y1="0" x2="60" y2="40" stroke="#00D4FF" strokeWidth="1"/>
-            <line x1="60" y1="80" x2="60" y2="120" stroke="#00D4FF" strokeWidth="1"/>
-            <line x1="0" y1="60" x2="40" y2="60" stroke="#00D4FF" strokeWidth="1"/>
-            <line x1="80" y1="60" x2="120" y2="60" stroke="#00D4FF" strokeWidth="1"/>
-            <circle cx="60" cy="60" r="6" fill="none" stroke="#00D4FF" strokeWidth="1"/>
-            <circle cx="60" cy="60" r="2" fill="#00D4FF"/>
-            <circle cx="0" cy="0" r="2" fill="#7B2FFF"/>
-            <circle cx="120" cy="120" r="2" fill="#7B2FFF"/>
-            <circle cx="0" cy="120" r="2" fill="#7B2FFF"/>
-            <circle cx="120" cy="0" r="2" fill="#7B2FFF"/>
-            <line x1="40" y1="60" x2="40" y2="40" stroke="#7B2FFF" strokeWidth="0.5"/>
-            <line x1="80" y1="60" x2="80" y2="80" stroke="#7B2FFF" strokeWidth="0.5"/>
-            <rect x="36" y="36" width="8" height="8" fill="none" stroke="#7B2FFF" strokeWidth="0.5"/>
-            <rect x="76" y="76" width="8" height="8" fill="none" stroke="#7B2FFF" strokeWidth="0.5"/>
+            <line x1="60" y1="0" x2="60" y2="40" stroke="var(--accent-cyan)" strokeWidth="1"/>
+            <line x1="60" y1="80" x2="60" y2="120" stroke="var(--accent-cyan)" strokeWidth="1"/>
+            <line x1="0" y1="60" x2="40" y2="60" stroke="var(--accent-cyan)" strokeWidth="1"/>
+            <line x1="80" y1="60" x2="120" y2="60" stroke="var(--accent-cyan)" strokeWidth="1"/>
+            <circle cx="60" cy="60" r="6" fill="none" stroke="var(--accent-cyan)" strokeWidth="1"/>
+            <circle cx="60" cy="60" r="2" fill="var(--accent-cyan)"/>
+            <circle cx="0" cy="0" r="2" fill="var(--accent-gold)"/>
+            <circle cx="120" cy="120" r="2" fill="var(--accent-gold)"/>
+            <circle cx="0" cy="120" r="2" fill="var(--accent-gold)"/>
+            <circle cx="120" cy="0" r="2" fill="var(--accent-gold)"/>
+            <line x1="40" y1="60" x2="40" y2="40" stroke="var(--accent-gold)" strokeWidth="0.5"/>
+            <line x1="80" y1="60" x2="80" y2="80" stroke="var(--accent-gold)" strokeWidth="0.5"/>
+            <rect x="36" y="36" width="8" height="8" fill="none" stroke="var(--accent-gold)" strokeWidth="0.5"/>
+            <rect x="76" y="76" width="8" height="8" fill="none" stroke="var(--accent-gold)" strokeWidth="0.5"/>
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#circuit)"/>
       </svg>
       {/* Radial glow spots */}
-      <div style={{ position: 'absolute', top: '20%', left: '10%', width: 400, height: 400, background: 'radial-gradient(circle, rgba(0,212,255,0.04) 0%, transparent 70%)', borderRadius: '50%' }}/>
-      <div style={{ position: 'absolute', bottom: '20%', right: '10%', width: 400, height: 400, background: 'radial-gradient(circle, rgba(123,47,255,0.04) 0%, transparent 70%)', borderRadius: '50%' }}/>
+      <div style={{ position: 'absolute', top: '20%', left: '10%', width: 400, height: 400, background: 'radial-gradient(circle, rgba(0,85,255,0.06) 0%, transparent 70%)', borderRadius: '50%' }}/>
+      <div style={{ position: 'absolute', bottom: '20%', right: '10%', width: 400, height: 400, background: 'radial-gradient(circle, rgba(212,175,55,0.06) 0%, transparent 70%)', borderRadius: '50%' }}/>
     </div>
   );
 }
@@ -54,7 +54,7 @@ function FeaturedShowcase({ products, title }: { products: Product[]; title: str
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <div style={{ width: 3, height: 20, background: 'linear-gradient(#00D4FF, #7B2FFF)', borderRadius: 2 }} />
+              <div style={{ width: 3, height: 20, background: 'linear-gradient(var(--accent-cyan), var(--accent-gold))', borderRadius: 2 }} />
               <span style={{ fontSize: 12, color: 'var(--accent-cyan)', fontFamily: 'var(--font-mono)', letterSpacing: '2px', textTransform: 'uppercase' }}>Spotlight</span>
             </div>
             <h2 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{title}</h2>

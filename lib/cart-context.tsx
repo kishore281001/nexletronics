@@ -17,33 +17,43 @@ const CartContext = createContext<CartContextType | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
-  const [cartKey, setCartKey] = useState('nxt_cart_guest');
+  const { user } = useAuth();
 
-  // Derive the correct cart key from the Supabase session
-  const syncCartKey = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const key = session?.user ? `nxt_cart_${session.user.id}` : 'nxt_cart_guest';
-    setCartKey(key);
-    const saved = localStorage.getItem(key);
-    setItems(saved ? JSON.parse(saved) : []);
-  }, []);
+  // Load the correct cart
+  const syncCart = useCallback(async () => {
+    if (user) {
+      // 1. User is logged in -> fetch from Supabase
+      const { data } = await supabase.from('cart').select('items').eq('user_id', user.id).single();
+      
+      // Merge guest cart if it exists
+      const savedGuest = localStorage.getItem('nxt_cart_guest');
+      const guestItems = savedGuest ? JSON.parse(savedGuest) : [];
+      
+      let finalItems = data?.items || [];
+      if (guestItems.length > 0) {
+        // Merge guest items into final items (simple append for now)
+        finalItems = [...finalItems, ...guestItems];
+        localStorage.removeItem('nxt_cart_guest');
+        await supabase.from('cart').upsert({ user_id: user.id, items: finalItems });
+      }
+      
+      setItems(finalItems);
+    } else {
+      // 2. User is guest -> read from localStorage
+      const saved = localStorage.getItem('nxt_cart_guest');
+      setItems(saved ? JSON.parse(saved) : []);
+    }
+  }, [user]);
 
-  // Load the correct cart on mount
-  useEffect(() => { syncCartKey(); }, [syncCartKey]);
+  useEffect(() => { syncCart(); }, [syncCart]);
 
-  // Re-sync cart on auth changes (login / logout) via custom event from AuthProvider
-  useEffect(() => {
-    const handleAuthChange = () => { syncCartKey(); };
-
-    window.addEventListener('nxt_auth_change', handleAuthChange);
-    return () => {
-      window.removeEventListener('nxt_auth_change', handleAuthChange);
-    };
-  }, [syncCartKey]);
-
-  const save = (newItems: CartItem[]) => {
+  const save = async (newItems: CartItem[]) => {
     setItems(newItems);
-    localStorage.setItem(cartKey, JSON.stringify(newItems));
+    if (user) {
+      await supabase.from('cart').upsert({ user_id: user.id, items: newItems });
+    } else {
+      localStorage.setItem('nxt_cart_guest', JSON.stringify(newItems));
+    }
   };
 
   const addItem = (product: Product) => {

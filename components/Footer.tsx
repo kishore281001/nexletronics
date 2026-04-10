@@ -44,8 +44,8 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-              <div style={{ width: 36, height: 36, background: 'linear-gradient(135deg, #00D4FF, #7B2FFF)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Zap size={18} color="#000" fill="#000" />
+              <div style={{ width: 36, height: 36, background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-purple))', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Zap size={18} color="#FFF" fill="#FFF" />
               </div>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>NEXLETRONICS</div>

@@ -63,31 +63,37 @@ export default function CheckoutPage() {
   const handlePayment = async (method: 'cod' | 'online') => {
     setLoading(true);
 
-    if (method === 'cod') {
-      const order = await addOrder({
-        user_id: user?.id || 'guest',
-        user_email: user?.email || address.phone + '@guest.nexletronics.in',
-        user_name: user?.name || address.name,
-        items, subtotal: total, shipping, total: grandTotal,
-        status: 'pending', shipping_address: address,
+    try {
+      // 1. Call Backend to create Order
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items,
+          address,
+          user_id: user?.id,
+          user_email: user?.email || address.phone + '@guest.nexletronics.in',
+          user_name: user?.name || address.name,
+          total: grandTotal,
+          method
+        })
       });
-      if (!order) {
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to checkout');
+
+      if (method === 'cod') {
+        const order = data.order;
+        setOrderId(order.order_number);
+        sendOrderEmail(order); 
+        clearCart();
+        setStep('success');
+        showToast('success', '🎉 Order placed!', `Order ${order.order_number} confirmed.`);
         setLoading(false);
-        showToast('error', 'Error', 'Failed to place order.');
         return;
       }
-      setOrderId(order.order_number);
-      await decrementStock(items);
-      sendOrderEmail(order);
-      clearCart();
-      setStep('success');
-      setLoading(false);
-      showToast('success', '🎉 Order placed!', `Order ${order.order_number} confirmed.`);
-      return;
-    }
 
-    // Razorpay online payment
-    try {
+      // 2. Razorpay Flow
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       document.body.appendChild(script);
@@ -95,40 +101,28 @@ export default function CheckoutPage() {
       script.onload = () => {
         const options = {
           key: process.env.NEXT_PUBLIC_RAZORPAY_KEY || 'rzp_test_placeholder',
-          amount: grandTotal * 100,
-          currency: 'INR',
+          amount: data.amount,
+          currency: data.currency,
           name: 'Nexletronics',
           description: `Order - ${items.length} item(s)`,
+          order_id: data.razorpay_order_id, // Important: use backend RZP order ID
           prefill: { name: address.name, contact: address.phone },
           theme: { color: '#00D4FF' },
-          handler: async (response: { razorpay_payment_id: string }) => {
-            const order = await addOrder({
-              user_id: user?.id || 'guest',
-              user_email: user?.email || address.phone + '@guest.nexletronics.in',
-              user_name: user?.name || address.name,
-              items, subtotal: total, shipping, total: grandTotal,
-              status: 'paid', payment_id: response.razorpay_payment_id,
-              shipping_address: address,
-            });
-            if (!order) {
-              setLoading(false);
-              showToast('error', 'Error', 'Failed to place order.');
-              return;
-            }
-            setOrderId(order.order_number);
-            await decrementStock(items);
-            sendOrderEmail(order);
+          handler: async (response: { razorpay_payment_id: string, razorpay_signature: string }) => {
+            // Under V2 architecture, webhooks handle DB writing. We just show success here immediately.
+            setOrderId(data.order_number);
             clearCart();
             setStep('success');
-            setLoading(false);
-            showToast('success', '✅ Payment successful!', `Order ${order.order_number} confirmed.`);
+            showToast('success', '✅ Payment successful!', `Order ${data.order_number} confirmed.`);
           },
         };
         const rzp = new window.Razorpay(options);
+        rzp.on('payment.failed', () => showToast('error', 'Payment Failed', 'Transaction cancelled'));
         rzp.open();
         setLoading(false);
       };
-    } catch {
+    } catch (error: any) {
+      showToast('error', 'Checkout Error', error.message);
       setLoading(false);
     }
   };

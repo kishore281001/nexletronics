@@ -102,7 +102,7 @@ export default function Navbar() {
 
       {/* ── Search overlay ───────────────────────────────── */}
       {searchOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,5,8,0.92)', zIndex: 300, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 80 }}
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(255,255,255,0.92)', zIndex: 300, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 80, backdropFilter: 'blur(8px)' }}
           onClick={e => { if (e.target === e.currentTarget) setSearchOpen(false); }}>
           <form onSubmit={handleSearch} style={{ width: '100%', maxWidth: 560, padding: '0 16px' }}>
             <div style={{ position: 'relative' }}>
@@ -112,7 +112,7 @@ export default function Navbar() {
                 ref={searchRef}
                 autoFocus
                 className="input-field"
-                style={{ paddingLeft: 48, paddingRight: 48, paddingTop: 16, paddingBottom: 16, fontSize: 16, borderColor: 'rgba(0,212,255,0.4)', boxShadow: '0 0 30px rgba(0,212,255,0.15)', borderRadius: 14 }}
+                style={{ paddingLeft: 48, paddingRight: 48, paddingTop: 16, paddingBottom: 16, fontSize: 16, borderColor: 'rgba(0,85,255,0.4)', boxShadow: '0 0 30px rgba(0,85,255,0.1)', borderRadius: 14, background: 'var(--bg-surface)' }}
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
@@ -130,19 +130,19 @@ export default function Navbar() {
       {/* ── Main navbar ──────────────────────────────────── */}
       <nav style={{
         position: 'sticky', top: 0, zIndex: 100,
-        background: scrolled ? 'rgba(5,5,8,0.95)' : 'var(--bg-primary)',
+        background: scrolled ? 'rgba(250,252,255,0.85)' : 'var(--bg-primary)',
         backdropFilter: scrolled ? 'blur(20px)' : 'none',
         WebkitBackdropFilter: scrolled ? 'blur(20px)' : 'none',
         borderBottom: `1px solid ${scrolled ? 'var(--border)' : 'transparent'}`,
-        boxShadow: scrolled ? '0 4px 30px rgba(0,0,0,0.4)' : 'none',
+        boxShadow: scrolled ? '0 4px 20px rgba(0,0,0,0.05)' : 'none',
         transition: 'all 0.3s ease',
       }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 16px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
 
           {/* Logo */}
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}>
-            <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg,#00D4FF,#7B2FFF)', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Zap size={16} color="#000" fill="#000" />
+            <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg,var(--accent-cyan),var(--accent-purple))', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Zap size={16} color="#FFF" fill="#FFF" />
             </div>
             <div>
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.5px', lineHeight: 1.2 }}>NEXLETRONICS</div>
@@ -175,7 +175,7 @@ export default function Navbar() {
               style={{ position: 'relative', width: 40, height: 40, borderRadius: 9, background: 'var(--bg-elevated)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', color: 'var(--text-secondary)', flexShrink: 0 }}>
               <ShoppingCart size={15} />
               {cartCount > 0 && (
-                <span style={{ position: 'absolute', top: -5, right: -5, width: 18, height: 18, borderRadius: '50%', background: 'var(--accent-cyan)', color: '#000', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--bg-primary)' }}>
+                <span style={{ position: 'absolute', top: -5, right: -5, width: 18, height: 18, borderRadius: '50%', background: 'var(--accent-cyan)', color: '#FFF', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--bg-surface)' }}>
                   {cartCount > 9 ? '9+' : cartCount}
                 </span>
               )}
@@ -187,7 +187,7 @@ export default function Navbar() {
                 <>
                   <button onClick={() => setUserMenuOpen(!userMenuOpen)}
                     style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderRadius: 9, background: 'var(--bg-elevated)', border: '1px solid var(--border-bright)', cursor: 'pointer', color: 'var(--text-primary)', fontFamily: 'var(--font-main)' }}>
-                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg,var(--accent-cyan),var(--accent-purple))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#000', flexShrink: 0 }}>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg,var(--accent-cyan),var(--accent-purple))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#FFF', flexShrink: 0 }}>
                       {initial}
                     </div>
                     <span style={{ fontSize: 13, fontWeight: 500, maxWidth: 72, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name.split(' ')[0]}</span>
@@ -203,7 +203,7 @@ export default function Navbar() {
                       {[{ href: '/account', label: 'My Account', icon: <User size={13} /> }, { href: '/orders', label: 'My Orders', icon: <Package size={13} /> }].map(({ href, label, icon }) => (
                         <Link key={label} href={href} onClick={() => setUserMenuOpen(false)}
                           style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', textDecoration: 'none', color: 'var(--text-secondary)', fontSize: 13 }}
-                          onMouseEnter={e => { (e.currentTarget).style.background = 'rgba(0,212,255,0.05)'; (e.currentTarget).style.color = 'var(--text-primary)'; }}
+                          onMouseEnter={e => { (e.currentTarget).style.background = 'var(--bg-primary)'; (e.currentTarget).style.color = 'var(--accent-cyan)'; }}
                           onMouseLeave={e => { (e.currentTarget).style.background = 'transparent'; (e.currentTarget).style.color = 'var(--text-secondary)'; }}>
                           {icon} {label}
                         </Link>

@@ -9,6 +9,7 @@ export interface User {
   email: string;
   phone?: string;
   avatar?: string;
+  role: 'user' | 'admin';
   created_at: string;
 }
 
@@ -32,13 +33,14 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: true,
 });
 
-function supabaseToUser(sbUser: SupabaseUser): User {
+function supabaseToUser(sbUser: SupabaseUser, role: 'user' | 'admin' = 'user'): User {
   return {
     id: sbUser.id,
     name: sbUser.user_metadata?.name ?? sbUser.email?.split('@')[0] ?? 'User',
     email: sbUser.email ?? '',
     phone: sbUser.user_metadata?.phone,
     avatar: sbUser.user_metadata?.avatar_url,
+    role,
     created_at: sbUser.created_at,
   };
 }
@@ -48,15 +50,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Get current session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ? supabaseToUser(session.user) : null);
+    const fetchSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+        setUser(supabaseToUser(session.user, data?.role || 'user'));
+      } else {
+        setUser(null);
+      }
       setIsLoading(false);
-    });
+    };
+    fetchSession();
 
     // Listen for auth changes (login/logout/session refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ? supabaseToUser(session.user) : null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        const { data } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+        setUser(supabaseToUser(session.user, data?.role || 'user'));
+      } else {
+        setUser(null);
+      }
       setIsLoading(false);
       // Notify other components (e.g. CartProvider)
       window.dispatchEvent(new Event('nxt_auth_change'));
