@@ -36,9 +36,14 @@ export async function POST(req: NextRequest) {
     const calculatedShipping = calculatedSubtotal >= 999 ? 0 : 50;
     const calculatedTotal = calculatedSubtotal + calculatedShipping;
 
-    // Reject if manipulated by > ₹1
-    if (Math.abs(calculatedTotal - total) > 1) {
-      return NextResponse.json({ error: 'Price mismatch. Please refresh.' }, { status: 400 });
+    // Reject if manipulated by > ₹5 (allow small float variations)
+    if (Math.abs(calculatedTotal - total) > 5) {
+      console.error(`Price Mismatch: Backend=${calculatedTotal}, Frontend=${total}`);
+      return NextResponse.json({ 
+        error: `Price mismatch (Expected: ₹${calculatedTotal}, Got: ₹${total}). please refresh your cart and try again.`,
+        expected: calculatedTotal,
+        received: total
+      }, { status: 400 });
     }
 
     // Generate internal order number

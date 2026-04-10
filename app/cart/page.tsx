@@ -9,7 +9,7 @@ import { Trash2, Plus, Minus, ShoppingCart, ArrowRight, Package, Zap, Lock } fro
 export default function CartPage() {
   const { items, removeItem, updateQuantity, total, itemCount } = useCart();
   const { user } = useAuth();
-  const shipping = total >= 999 ? 0 : 80;
+  const shipping = total >= 999 ? 0 : 50;
   const grandTotal = total + shipping;
 
   if (items.length === 0) {

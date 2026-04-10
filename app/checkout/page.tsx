@@ -28,7 +28,7 @@ export default function CheckoutPage() {
   const [orderId, setOrderId] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const shipping = total >= 999 ? 0 : 80;
+  const shipping = total >= 999 ? 0 : 50;
   const grandTotal = total + shipping;
 
   const [address, setAddress] = useState<Address>({
