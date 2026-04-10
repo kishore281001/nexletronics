@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
-import { addOrder, decrementStock } from '@/lib/store';
+import { addOrder, decrementStock, sendOrderEmail } from '@/lib/store';
 import { Address } from '@/lib/types';
 import { Package, CreditCard, CheckCircle, ArrowRight, Truck } from 'lucide-react';
 
@@ -78,6 +78,7 @@ export default function CheckoutPage() {
       }
       setOrderId(order.order_number);
       await decrementStock(items);
+      sendOrderEmail(order);
       clearCart();
       setStep('success');
       setLoading(false);
@@ -116,6 +117,7 @@ export default function CheckoutPage() {
             }
             setOrderId(order.order_number);
             await decrementStock(items);
+            sendOrderEmail(order);
             clearCart();
             setStep('success');
             setLoading(false);

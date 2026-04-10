@@ -84,7 +84,7 @@ export default function Footer() {
               ['Sensors', '/products?cat=Sensors'],
               ['Displays', '/products?cat=Displays'],
               ['Motor Drivers', '/products?cat=Motor+Drivers'],
-              ['Project Kits', '/products?cat=Kits'],
+              ['Project Kits', '/products?cat=Project+Kits'],
               ['Passive Components', '/products?cat=Passive+Components'],
             ].map(([label, href]) => (
               <Link key={href} href={href} style={{ display: 'block', color: 'var(--text-secondary)', textDecoration: 'none', fontSize: 13, marginBottom: 8, transition: 'color 0.2s' }}

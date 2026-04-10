@@ -110,6 +110,20 @@ export async function updateOrderStatus(id: string, status: Order['status'], tra
   if (error) console.error('updateOrderStatus:', error);
 }
 
+export async function sendOrderEmail(order: Order): Promise<void> {
+  try {
+    const settings = await getSiteSettings();
+    const adminEmail = settings.contact_email || 'admin@nexletronics.in';
+    await fetch('/api/send-order-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order, adminEmail }),
+    });
+  } catch (error) {
+    console.error('Failed to trigger order email:', error);
+  }
+}
+
 export async function decrementStock(items: { product: { id: string }; quantity: number }[]): Promise<void> {
   for (const item of items) {
     // Fetch current stock then decrement
